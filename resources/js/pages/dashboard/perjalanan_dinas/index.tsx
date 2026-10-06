@@ -240,6 +240,18 @@ export default function PerjalananDinasIndex(props: any) {
     });
 
     const items = queryResult?.data?.data || [];
+
+    // Opsi PIC untuk filter Civitas (mengambil dari usersList atau unique user dari items)
+    const picOptions = useMemo(() => {
+        if (usersList && usersList.length > 0) return usersList;
+        const map = new Map();
+        (items || []).forEach((it: any) => {
+            if (it.user && it.user.id && !map.has(it.user.id)) {
+                map.set(it.user.id, it.user);
+            }
+        });
+        return Array.from(map.values());
+    }, [usersList, items]);
     const paguSummary = queryResult?.pagu_summary || initialPaguSummary || {};
     const kegiatanList = queryResult?.kegiatan_list || initialKegiatanList || [];
 
