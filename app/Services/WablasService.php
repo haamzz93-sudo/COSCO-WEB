@@ -797,4 +797,116 @@ class WablasService
         $message = self::prepareMessage($replacements, $template);
         $result = self::sendMessage($tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], $message);
     }
+
+    // -------------------------------------------------------------------------
+    // 16. Pengingat TOR ke Koordinator Madiun (Remind Koordinator)
+    // -------------------------------------------------------------------------
+    public function send_remind_koordinator_tor($request, $tor_id)
+    {
+        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
+        if (!$tor || !$tor['kegiatan_detail']) {
+            return false;
+        }
+
+        $koor = User::get()->filter(fn($user)=>$user->hasPermission("specific_is_user_koordinator"));
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['remind_koordinator_tor'] ?? "Cosco Super APPS\nKpd Yth. *{KOORDINATOR}*\n\nMohon izin mengingatkan, terdapat pengajuan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* yang saat ini sedang menunggu review dan persetujuan dari Bapak/Ibu Koordinator.\n\nTautan verifikasi:\n{link_sistem}\n\nTerima kasih atas perhatian dan arahan Bapak/Ibu.";
+
+        $messages = [];
+        foreach ($koor as $val) {
+            $replacements = [
+                '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+                '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+                '{KOORDINATOR}'     => $val['name']
+            ];
+            if (!empty($val['no_wa'])) {
+                $messages[] = [
+                    'phone'   => $val['no_wa'],
+                    'message' => self::prepareMessage($replacements, $template)
+                ];
+            }
+        }
+        if (!empty($messages)) {
+            SendWablasJob::dispatch($messages);
+        }
+        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // 17. Pengingat TOR ke Wakil Dekan SV UNS (Remind Wakil Dekan)
+    // -------------------------------------------------------------------------
+    public function send_remind_wd_tor($request, $tor_id)
+    {
+        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
+        if (!$tor || !$tor['kegiatan_detail']) {
+            return false;
+        }
+
+        $wd = null;
+        if (!empty($tor['wakil_dekan_id'])) {
+            $wd = User::find($tor['wakil_dekan_id']);
+        }
+        if (!$wd) {
+            $wd = User::whereHas('data_role', function($q){
+                $q->whereJsonContains('permissions', 'specific_is_user_wakil_dekan')
+                  ->orWhereJsonContains('permissions', 'specific_wakil_dekan')
+                  ->orWhereJsonContains('permissions', 'tor_wakil_dekan_validasi');
+            })->first();
+        }
+        if (!$wd) {
+            $wd = User::whereIn('role', ['wakil_dekan', 'pimpinan', 'admin'])->first();
+        }
+
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['remind_wd_tor'] ?? "Cosco Super APPS\nKpd Yth. *{WAKIL_DEKAN}*\n\nMohon izin melaporkan, usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun dan saat ini menunggu pengesahan akhir dari Bapak/Ibu Wakil Dekan.\n\nTautan persetujuan:\n{link_sistem}\n\nTerima kasih atas perkenan dan arahan Bapak/Ibu.";
+
+        $messages = [];
+        if ($wd && !empty($wd->no_wa)) {
+            $replacements = [
+                '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+                '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+                '{WAKIL_DEKAN}'     => $wd->name
+            ];
+            $messages[] = [
+                'phone'   => $wd->no_wa,
+                'message' => self::prepareMessage($replacements, $template)
+            ];
+            SendWablasJob::dispatch($messages);
+        }
+        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // 18. Pengingat Memo Cair ke Sub Kor Non Akademik (Remind Keuangan)
+    // -------------------------------------------------------------------------
+    public function send_remind_keuangan_memo_cair($request, $memo_cair_id)
+    {
+        $memo = MemoCairModel::with(["tor", "tor.kegiatan_detail", "tor.kegiatan_detail.user_pic_kegiatan"])->find($memo_cair_id);
+        if (!$memo) {
+            return false;
+        }
+
+        $keuangan = User::get()->filter(fn($user)=>$user->hasPermission("specific_is_user_keuangan"));
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['remind_keuangan_memo_cair'] ?? "Cosco Super APPS\nKpd Yth. *{KEUANGAN}*\n\nMohon izin mengingatkan, pengajuan Memo Cair untuk kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* saat ini sedang menunggu proses validasi dari Tim Keuangan / Sub Kor Non-Akademik.\n\nTautan periksa:\n{link_sistem}\n\nTerima kasih atas kerja samanya.";
+
+        $messages = [];
+        foreach ($keuangan as $val) {
+            $replacements = [
+                '{PIC_KEGIATAN}'    => $memo['tor']['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+                '{DETAIL_KEGIATAN}' => $memo['tor']['kegiatan_detail']['nama_kegiatan_detail'] ?? 'Kegiatan',
+                '{KEUANGAN}'        => $val['name']
+            ];
+            if (!empty($val['no_wa'])) {
+                $messages[] = [
+                    'phone'   => $val['no_wa'],
+                    'message' => self::prepareMessage($replacements, $template)
+                ];
+            }
+        }
+        if (!empty($messages)) {
+            SendWablasJob::dispatch($messages);
+        }
+        return true;
+    }
 }

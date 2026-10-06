@@ -49,7 +49,12 @@ $waTemplates = [
     'reject_bayar_bendahara' => "Cosco Super APPS\nKpd Yth {nama_pic}\n\nPerhatian, proses transfer pencairan dana kegiatan {detail_kegiatan} mengalami kendala / revisi nomor rekening dari Bendahara.\nCatatan: {catatan_revisi}\nMohon segera periksa dan perbarui data rekening anda di Cosco Super Apps.\n\n{link_sistem}",
     
     // 8. TUTUP BUKU & SELESAI
-    'close_kegiatan_final' => "Cosco Super APPS\nPemberitahuan: Seluruh alur perencanaan TOR, pelaksanaan kegiatan, verifikasi SPJ, dan transfer pembayaran Bendahara untuk kegiatan {detail_kegiatan} telah SELESAI TUNTAS 100%.\n\n{link_sistem}"
+    'close_kegiatan_final' => "Cosco Super APPS\nPemberitahuan: Seluruh alur perencanaan TOR, pelaksanaan kegiatan, verifikasi SPJ, dan transfer pembayaran Bendahara untuk kegiatan {detail_kegiatan} telah SELESAI TUNTAS 100%.\n\n{link_sistem}",
+    
+    // 9. PENGINGAT / REMINDER PIMPINAN (TAMBAHAN RESMI)
+    'remind_koordinator_tor' => "Cosco Super APPS\nKpd Yth. *{KOORDINATOR}*\n\nMohon izin mengingatkan, terdapat pengajuan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* yang saat ini sedang menunggu review dan persetujuan dari Bapak/Ibu Koordinator.\n\nTautan verifikasi:\n{link_sistem}\n\nTerima kasih atas perhatian dan arahan Bapak/Ibu.",
+    'remind_wd_tor' => "Cosco Super APPS\nKpd Yth. *{WAKIL_DEKAN}*\n\nMohon izin melaporkan, usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun dan saat ini menunggu pengesahan akhir dari Bapak/Ibu Wakil Dekan.\n\nTautan persetujuan:\n{link_sistem}\n\nTerima kasih atas perkenan dan arahan Bapak/Ibu.",
+    'remind_keuangan_memo_cair' => "Cosco Super APPS\nKpd Yth. *{KEUANGAN}*\n\nMohon izin mengingatkan, pengajuan Memo Cair untuk kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* saat ini sedang menunggu proses validasi dari Tim Keuangan / Sub Kor Non-Akademik.\n\nTautan periksa:\n{link_sistem}\n\nTerima kasih atas kerja samanya."
 ];
 
 foreach ($waTemplates as $type => $content) {

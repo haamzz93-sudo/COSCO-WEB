@@ -27,5 +27,5 @@ Schedule::call(function (WablasService $wablasService) {
 })
     ->timezone(env("APP_TIMEZONE", "Asia/Jakarta"))
     ->cron('0 7 * * *')
-    ->name('reminder:pic-tor')
+    ->name('reminder:pic-memo-cair')
     ->withoutOverlapping();

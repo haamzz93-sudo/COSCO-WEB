@@ -138,7 +138,10 @@ export default function PengaturanPage() {
                 remind_memo_cair: "",
                 submit_memo_cair: "",
                 approve_memo_cair_keuangan: "",
-                reject_memo_cair_keuangan: ""
+                reject_memo_cair_keuangan: "",
+                remind_koordinator_tor: "",
+                remind_wd_tor: "",
+                remind_keuangan_memo_cair: ""
             }
         },
         refetchOnWindowFocus: false,
@@ -275,7 +278,10 @@ export default function PengaturanPage() {
                 bayar_memo_cair_bendahara: values.bayar_memo_cair_bendahara || "",
                 notify_dana_cair_pic: values.notify_dana_cair_pic || "",
                 reject_bayar_bendahara: values.reject_bayar_bendahara || "",
-                close_kegiatan_final: values.close_kegiatan_final || ""
+                close_kegiatan_final: values.close_kegiatan_final || "",
+                remind_koordinator_tor: values.remind_koordinator_tor || "",
+                remind_wd_tor: values.remind_wd_tor || "",
+                remind_keuangan_memo_cair: values.remind_keuangan_memo_cair || ""
             }
 
             const payload = {
@@ -318,6 +324,9 @@ export default function PengaturanPage() {
                     { type: "notify_dana_cair_pic", content: values.notify_dana_cair_pic || "" },
                     { type: "reject_bayar_bendahara", content: values.reject_bayar_bendahara || "" },
                     { type: "close_kegiatan_final", content: values.close_kegiatan_final || "" },
+                    { type: "remind_koordinator_tor", content: values.remind_koordinator_tor || "" },
+                    { type: "remind_wd_tor", content: values.remind_wd_tor || "" },
+                    { type: "remind_keuangan_memo_cair", content: values.remind_keuangan_memo_cair || "" },
                     { type: "template_wa", content: JSON.stringify(waTemplates) }
                 ]
             }
@@ -513,7 +522,10 @@ export default function PengaturanPage() {
                                     bayar_memo_cair_bendahara: dataObj.bayar_memo_cair_bendahara || "Cosco Super APPS\nKpd Yth Bendahara Pengeluaran Pembantu\nBerkas SPJ kegiatan {detail_kegiatan} oleh {nama_pic} telah diperiksa dan dinyatakan VALID oleh Verifikator SPJ. Mohon segera melakukan eksekusi pembayaran/transfer dana sebesar Rp {nominal} ke rekening {link_sistem} an. {nama_pic} dan upload bukti transfer di Cosco Super Apps.\n\n{link_sistem}",
                                     notify_dana_cair_pic: dataObj.notify_dana_cair_pic || "Cosco Super APPS\nKpd Yth {nama_pic}\n\nYeay, Kabar Baik! Dana pembayaran kegiatan {detail_kegiatan} sebesar Rp {nominal} telah BERHASIL DITRANSFER oleh Bendahara ke rekening terdaftar anda (Bukti transfer telah terlampir di sistem). Seluruh rangkaian kegiatan dan pertanggungjawaban telah SELESAI PENUH (LUNAS / CLOSED). Terima kasih atas dedikasi dan kinerjanya!\n\n{link_sistem}",
                                     reject_bayar_bendahara: dataObj.reject_bayar_bendahara || "Cosco Super APPS\nKpd Yth {nama_pic}\n\nPerhatian, proses transfer pencairan dana kegiatan {detail_kegiatan} mengalami kendala / revisi nomor rekening dari Bendahara.\nCatatan: {catatan_revisi}\nMohon segera periksa dan perbarui data rekening anda di Cosco Super Apps.\n\n{link_sistem}",
-                                    close_kegiatan_final: dataObj.close_kegiatan_final || "Cosco Super APPS\nPemberitahuan: Seluruh alur perencanaan TOR, pelaksanaan kegiatan, verifikasi SPJ, dan transfer pembayaran Bendahara untuk kegiatan {detail_kegiatan} telah SELESAI TUNTAS 100%.\n\n{link_sistem}"
+                                    close_kegiatan_final: dataObj.close_kegiatan_final || "Cosco Super APPS\nPemberitahuan: Seluruh alur perencanaan TOR, pelaksanaan kegiatan, verifikasi SPJ, dan transfer pembayaran Bendahara untuk kegiatan {detail_kegiatan} telah SELESAI TUNTAS 100%.\n\n{link_sistem}",
+                                    remind_koordinator_tor: dataObj.remind_koordinator_tor || "Cosco Super APPS\nKpd Yth. *{KOORDINATOR}*\n\nMohon izin mengingatkan, terdapat pengajuan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* yang saat ini sedang menunggu review dan persetujuan dari Bapak/Ibu Koordinator.\n\nTautan verifikasi:\n{link_sistem}\n\nTerima kasih atas perhatian dan arahan Bapak/Ibu.",
+                                    remind_wd_tor: dataObj.remind_wd_tor || "Cosco Super APPS\nKpd Yth. *{WAKIL_DEKAN}*\n\nMohon izin melaporkan, usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun dan saat ini menunggu pengesahan akhir dari Bapak/Ibu Wakil Dekan.\n\nTautan persetujuan:\n{link_sistem}\n\nTerima kasih atas perkenan dan arahan Bapak/Ibu.",
+                                    remind_keuangan_memo_cair: dataObj.remind_keuangan_memo_cair || "Cosco Super APPS\nKpd Yth. *{KEUANGAN}*\n\nMohon izin mengingatkan, pengajuan Memo Cair untuk kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* saat ini sedang menunggu proses validasi dari Tim Keuangan / Sub Kor Non-Akademik.\n\nTautan periksa:\n{link_sistem}\n\nTerima kasih atas kerja samanya."
                                 }}
                                 enableReinitialize
                                 onSubmit={(values, actions) => {
@@ -969,7 +981,10 @@ export default function PengaturanPage() {
                                                 { no: 20, stage: "5", stageTitle: "Pembayaran Bendahara (Final)", title: "Permintaan Eksekusi Transfer ke Bendahara", key: "bayar_memo_cair_bendahara", recipient: "Bendahara Pembayaran (BPP)", timing: "Realtime saat SPJ dinyatakan Valid", color: "blue" },
                                                 { no: 21, stage: "5", stageTitle: "Pembayaran Bendahara (Final)", title: "Konfirmasi Transfer Dana LUNAS ke PIC", key: "notify_dana_cair_pic", recipient: "PIC Kegiatan", timing: "Realtime saat Bendahara konfirmasi transfer", color: "emerald" },
                                                 { no: 22, stage: "5", stageTitle: "Pembayaran Bendahara (Final)", title: "Kendala / Revisi Rekening dari Bendahara", key: "reject_bayar_bendahara", recipient: "PIC Kegiatan", timing: "Realtime saat Bendahara periksa rekening", color: "rose" },
-                                                { no: 23, stage: "6", stageTitle: "Tutup Buku Kegiatan (CLOSED)", title: "Notifikasi Kegiatan Selesai Tuntas (CLOSED)", key: "close_kegiatan_final", recipient: "PIC Kegiatan & Admin", timing: "Otomatis saat Pembayaran & SPJ Tuntas", color: "blue" }
+                                                { no: 23, stage: "6", stageTitle: "Tutup Buku Kegiatan (CLOSED)", title: "Notifikasi Kegiatan Selesai Tuntas (CLOSED)", key: "close_kegiatan_final", recipient: "PIC Kegiatan & Admin", timing: "Otomatis saat Pembayaran & SPJ Tuntas", color: "blue" },
+                                                { no: 24, stage: "2", stageTitle: "Review TOR Koordinator (Stage 1)", title: "Pengingat Persetujuan TOR ke Koordinator", key: "remind_koordinator_tor", recipient: "Koordinator Madiun", timing: "Manual / H+2 berkala jika belum di-ACC", color: "amber" },
+                                                { no: 25, stage: "2", stageTitle: "Review TOR Wakil Dekan (Stage 3)", title: "Pengingat Pengesahan TOR ke Wakil Dekan", key: "remind_wd_tor", recipient: "Wakil Dekan SV UNS", timing: "Manual / H+2 berkala jika belum disahkan WD", color: "amber" },
+                                                { no: 26, stage: "3", stageTitle: "Pencairan Dana (Memo Cair)", title: "Pengingat Validasi Memo Cair ke Sub Kor", key: "remind_keuangan_memo_cair", recipient: "Sub Kor Non Akademik", timing: "Manual / H+2 berkala jika belum divalidasi", color: "amber" }
                                             ]
 
                                             const allTemplates = [...baseTemplates, ...customTemplates]
