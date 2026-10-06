@@ -1350,10 +1350,10 @@ export default function Page() {
                             </div>
                             <div>
                                 <h4 className="text-sm font-black text-slate-900 dark:text-white leading-snug">
-                                    {tor?.kegiatan_detail?.nama_kegiatan_detail || tor?.judul_kegiatan || "-"}
+                                    {detail?.kegiatan_detail?.nama_kegiatan_detail || detail?.judul_kegiatan || modalBayar.item?.tor?.kegiatan_detail?.nama_kegiatan_detail || "-"}
                                 </h4>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    PIC: <span className="font-semibold text-slate-700 dark:text-slate-300">{tor?.kegiatan_detail?.user_pic_kegiatan?.name || tor?.kegiatan_detail?.user_pic?.name || 'PIC Kegiatan'}</span> • Prodi: <span className="font-semibold text-slate-700 dark:text-slate-300">{tor?.program_studi?.nama_program_studi || tor?.program_studi?.nama || '-'}</span>
+                                    PIC: <span className="font-semibold text-slate-700 dark:text-slate-300">{detail?.kegiatan_detail?.user_pic_kegiatan?.name || detail?.kegiatan_detail?.user_pic?.name || modalBayar.item?.tor?.kegiatan_detail?.user_pic_kegiatan?.name || 'PIC Kegiatan'}</span> • Prodi: <span className="font-semibold text-slate-700 dark:text-slate-300">{detail?.program_studi?.nama_program_studi || detail?.program_studi?.nama || modalBayar.item?.tor?.program_studi?.nama_program_studi || '-'}</span>
                                 </p>
                             </div>
                             <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
