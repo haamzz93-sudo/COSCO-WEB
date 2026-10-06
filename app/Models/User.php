@@ -105,6 +105,7 @@ class User extends Authenticatable
             "specific_wakil_dekan",
             "specific_is_user_koordinator",
             "specific_is_user_keuangan",
+            "specific_is_user_pic",
 
             'kegiatan_add',
             'kegiatan_update',
@@ -125,7 +126,44 @@ class User extends Authenticatable
 
             'spj_pic_update',
             'spj_pic_ajukan',
-            'spj_keuangan_validasi'
+            'spj_keuangan_validasi',
+
+            // Master data & CRUD permissions
+            'program_studi_add',
+            'program_studi_update',
+            'program_studi_delete',
+
+            'iku_add',
+            'iku_update',
+            'iku_delete',
+
+            'ik_add',
+            'ik_update',
+            'ik_delete',
+
+            'satuan_add',
+            'satuan_update',
+            'satuan_delete',
+
+            'mak_add',
+            'mak_update',
+            'mak_delete',
+
+            'kelompok_belanja_add',
+            'kelompok_belanja_update',
+            'kelompok_belanja_delete',
+
+            'user_add',
+            'user_update',
+            'user_delete',
+
+            'role_add',
+            'role_update',
+            'role_delete',
+
+            'p_add',
+            'p_update',
+            'p_delete'
         ];
         if($this->checkIsAdmin()){
             return $permissions;

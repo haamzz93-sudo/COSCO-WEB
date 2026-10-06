@@ -329,7 +329,7 @@ const TableKelompokBelanja = (props: any) => {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
-                        {auth.user?.permissions?.includes("kelompok_belanja_add") && (
+                        {(auth.user?.is_admin || auth.user?.permissions?.includes("kelompok_belanja_add")) && (
                         <Button 
                             type="button"
                             onClick={() => props.toggleTambah()}
@@ -456,7 +456,7 @@ const TableKelompokBelanja = (props: any) => {
                                     <Eye className="size-3.5" />
                                 </button>
 
-                                    {auth.user?.permissions?.includes("kelompok_belanja_update") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("kelompok_belanja_update")) && (
                                     <button
                                         type="button"
                                         onClick={() => props.toggleEdit(item, true)}
@@ -467,7 +467,7 @@ const TableKelompokBelanja = (props: any) => {
                                     </button>
                                     )}
 
-                                    {auth.user?.permissions?.includes("kelompok_belanja_delete") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("kelompok_belanja_delete")) && (
                                     <button
                                         type="button"
                                         onClick={() => confirmHapus(item)}

@@ -263,7 +263,7 @@ const TableSatuan = (props: any) => {
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
-                        {auth.user?.permissions?.includes("satuan_add") && (
+                        {(auth.user?.is_admin || auth.user?.permissions?.includes("satuan_add")) && (
                         <Button 
                             type="button"
                             onClick={() => props.toggleTambah()}
@@ -331,7 +331,7 @@ const TableSatuan = (props: any) => {
                                     <Eye className="size-3.5" />
                                 </button>
 
-                                    {auth.user?.permissions?.includes("satuan_update") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("satuan_update")) && (
                                     <button
                                         type="button"
                                         onClick={() => props.toggleEdit(item, true)}
@@ -342,7 +342,7 @@ const TableSatuan = (props: any) => {
                                     </button>
                                     )}
 
-                                    {auth.user?.permissions?.includes("satuan_delete") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("satuan_delete")) && (
                                     <button
                                         type="button"
                                         onClick={() => confirmHapus(item)}

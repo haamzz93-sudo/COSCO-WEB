@@ -268,7 +268,7 @@ const TableMak = (props: any) => {
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
-                        {auth.user?.permissions?.includes("mak_add") && (
+                        {(auth.user?.is_admin || auth.user?.permissions?.includes("mak_add")) && (
                         <Button 
                             type="button"
                             onClick={() => props.toggleTambah()}
@@ -336,7 +336,7 @@ const TableMak = (props: any) => {
                                     <Eye className="size-3.5" />
                                 </button>
 
-                                    {auth.user?.permissions?.includes("mak_update") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("mak_update")) && (
                                     <button
                                         type="button"
                                         onClick={() => props.toggleEdit(item, true)}
@@ -347,7 +347,7 @@ const TableMak = (props: any) => {
                                     </button>
                                     )}
 
-                                    {auth.user?.permissions?.includes("mak_delete") && (
+                                    {(auth.user?.is_admin || auth.user?.permissions?.includes("mak_delete")) && (
                                     <button
                                         type="button"
                                         onClick={() => confirmHapus(item)}
