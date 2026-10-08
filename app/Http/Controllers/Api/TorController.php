@@ -137,7 +137,7 @@ class TorController extends Controller
         }
 
         //VALIDATION APPLIED (Admins can always update)
-        if(!$isAdmin && !in_array($id_data['status_ajuan'], ["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi"])){
+        if(!$isAdmin && !in_array($id_data['status_ajuan'], ["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "wakil_dekan_rejected"])){
             return response()->json([
                 'error' =>"VALIDATION_ERROR",
                 'data'  =>"Dokumen sedang dalam tahap verifikasi/persetujuan."
@@ -168,37 +168,36 @@ class TorController extends Controller
         $kategori_kegiatan = $tor['kegiatan_detail']['kategori_kegiatan'] ?? 'kegiatan';
 
         if (isset($req['rab']) && is_array($req['rab']) && count($req['rab']) > 0 && !in_array($kategori_kegiatan, ['bhp', 'inventaris'])) {
+            // SINKRONISASI OTOMATIS: Jika ada master kelompok belanja, sinkronkan pajak dengan master terbaru
+            foreach ($req['rab'] as $idx => $item) {
+                if (!empty($item['kelompok_belanja_id'])) {
+                    $kb = KelompokBelanjaModel::find($item['kelompok_belanja_id']);
+                    if ($kb && isset($kb->kwitansi_pajak)) {
+                        $req['rab'][$idx]['pajak'] = (float)$kb->kwitansi_pajak;
+                    }
+                }
+            }
+
             $rules['rab.*.kelompok_belanja_id'] = "required|exists:App\Models\KelompokBelanjaModel,id";
             $rules['rab.*.nama_kelompok_belanja'] = "required|string";
             $rules['rab.*.kode_item'] = 'required|string|distinct';
             $rules['rab.*.keterangan'] = 'required|string';
-            $rules['rab.*.frekuensi'] = 'required|integer|min:1';
-            $rules['rab.*.volume'] = 'required|integer|min:1';
+            $rules['rab.*.frekuensi'] = 'required|numeric|min:1';
+            $rules['rab.*.volume'] = 'required|numeric|min:1';
             $rules['rab.*.satuan'] = 'required|string';
-            $rules['rab.*.harga_satuan'] = 'required|numeric|min:1|regex:/^\d+(\.\d{1,2})?$/';
-            $rules['rab.*.pajak'] = [
-                'required',
-                'numeric',
-                function($attr, $value, $fail) {
-                    preg_match('/rab\.(\d+)\.pajak/', $attr, $matches);
-                    $index = $matches[1] ?? null;
-                    
-                    if ($index !== null) {
-                        $kelompok_belanja_id = data_get(request()->all(), "rab.{$index}.kelompok_belanja_id");
-                        $kelompok_belanja=KelompokBelanjaModel::find($kelompok_belanja_id);
-                        
-                        if(!$kelompok_belanja){
-                            return $fail("Bad Request.");
-                        }
-                        if($value!=$kelompok_belanja['kwitansi_pajak']){
-                            return $fail("Bad Request.");
-                        }
-                    }
-                }
-            ];
+            $rules['rab.*.harga_satuan'] = 'required|numeric|min:0';
+            $rules['rab.*.pajak'] = 'required|numeric|min:0';
         }
 
-        $validation=Validator::make($req, $rules);
+        $validation=Validator::make($req, $rules, [
+            'rab.*.kelompok_belanja_id.required' => 'Jenis belanja wajib dipilih pada setiap baris item.',
+            'rab.*.kelompok_belanja_id.exists'   => 'Jenis belanja yang dipilih tidak valid di master data.',
+            'rab.*.keterangan.required'          => 'Keterangan rincian belanja wajib diisi.',
+            'rab.*.volume.required'              => 'Volume item belanja wajib diisi minimal 1.',
+            'rab.*.frekuensi.required'           => 'Frekuensi item belanja wajib diisi minimal 1.',
+            'rab.*.harga_satuan.required'        => 'Harga satuan item belanja wajib diisi.',
+            'rab.*.harga_satuan.min'             => 'Harga satuan tidak boleh bernilai negatif.',
+        ]);
         if($validation->fails()){
             return response()->json([
                 'error' =>"VALIDATION_ERROR",

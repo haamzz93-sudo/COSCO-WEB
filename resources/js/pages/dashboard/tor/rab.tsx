@@ -810,10 +810,18 @@ const Rab=(props)=>{
         formik.setFieldValue("rab", new_rab)
     }
     const saveDraft=(formik, actionSuccess=null)=>{
-        const sanitizedRab = (formik.values.rab || []).map((item: any) => ({
-            ...item,
-            kelompok_belanja_id: (item.kelompok_belanja_id !== undefined && item.kelompok_belanja_id !== null) ? String(item.kelompok_belanja_id) : ""
-        }));
+        const sanitizedRab = (formik.values.rab || []).map((item: any) => {
+            const kbOption = props.options_kelompok_belanja?.find((f: any) => String(f.value) === String(item.kelompok_belanja_id));
+            const currentTax = kbOption && kbOption.data?.kwitansi_pajak !== undefined
+                ? (parseFloat(kbOption.data.kwitansi_pajak) || 0)
+                : (item.pajak !== undefined && item.pajak !== "" ? parseFloat(item.pajak) : 0);
+
+            return {
+                ...item,
+                kelompok_belanja_id: (item.kelompok_belanja_id !== undefined && item.kelompok_belanja_id !== null) ? String(item.kelompok_belanja_id) : "",
+                pajak: currentTax
+            };
+        });
         let new_values={
             id:props.tor.id,
             rab: sanitizedRab
@@ -821,6 +829,7 @@ const Rab=(props)=>{
 
         edit_data_rab.mutate(new_values, {
             onSuccess:data=>{
+                toast.success("Draft RAB berhasil disimpan!", {position:"bottom-center"})
                 if(_.isFunction(actionSuccess)){
                     actionSuccess()
                 }
@@ -834,8 +843,9 @@ const Rab=(props)=>{
         const isUnderReview = ["sent", "koordinator_applied", "wakil_dekan_applied", "keuangan_applied"].includes(props.tor?.status_ajuan)
         const isRevisiOrDraft = !props.tor?.status_ajuan || ["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "wakil_dekan_rejected"].includes(props.tor?.status_ajuan)
 
-        const isAdmin = auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin
-        const isPic = (props.tor?.kegiatan_detail?.pic_kegiatan && props.tor.kegiatan_detail.pic_kegiatan == auth.user?.id) || auth.user?.permissions?.includes("specific_pic")
+        const isAdmin = auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin || auth.user?.permissions?.includes("tor_superadmin")
+        const picId = props.tor?.kegiatan_detail?.pic_kegiatan || props.tor?.pic_kegiatan || props.tor?.user_pic_kegiatan?.id
+        const isPic = (picId && String(picId) === String(auth.user?.id)) || auth.user?.permissions?.includes("specific_pic") || auth.user?.permissions?.includes("tor_pic_ajukan")
         
         if (isRevisiOrDraft && (isAdmin || isPic)) {
             return false
