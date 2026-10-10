@@ -3,9 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use App\Models\RoleModel;
-use App\Models\User;
 
 return new class extends Migration
 {
@@ -27,7 +25,7 @@ return new class extends Migration
             }
         });
 
-        // 2. Suntik Role Pejabat Pengadaan (PP)
+        // 2. Suntik Data Role Pejabat Pengadaan (PP) ke tabel roles
         RoleModel::updateOrCreate(
             ['role' => 'pejabat_pengadaan'],
             [
@@ -44,30 +42,6 @@ return new class extends Migration
                 'keterangan' => 'Role Pejabat Pengadaan (PP): Verifikasi HPS BHP & Inventaris, Eksekusi Pengadaan, dan Unggah BAST Dokumen Belanja'
             ]
         );
-
-        // 3. Suntik Akun Pejabat Pengadaan (PP)
-        $user = User::where('username', 'pejabat_pengadaan')
-            ->orWhere('email', 'pengadaan.madiun@staff.uns.ac.id')
-            ->first();
-
-        $userData = [
-            'name' => 'Pejabat Pengadaan PSDKU UNS Madiun',
-            'username' => 'pejabat_pengadaan',
-            'email' => 'pengadaan.madiun@staff.uns.ac.id',
-            'password' => '$2y$12$Q4oP7QfZJ5z7u48uE70NKe9nCq64V2Q7K24a7N64kG2c3q4r8b5ty',
-            'role' => 'pejabat_pengadaan',
-            'status' => 'aktif',
-            'tipe_user' => 'staff',
-            'nip' => '198805122019031005',
-            'no_wa' => '081234567890',
-            'avatar_url' => '',
-        ];
-
-        if ($user) {
-            $user->update($userData);
-        } else {
-            User::create($userData);
-        }
     }
 
     /**

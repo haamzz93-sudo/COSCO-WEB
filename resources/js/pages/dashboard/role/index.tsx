@@ -853,6 +853,22 @@ const PermissionForm=({data, setData})=>{
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer p-1 rounded">
                         <Checkbox
+                            checked={data.includes("specific_is_user_pp")}
+                            onCheckedChange={(checked)=>{
+                                let new_permissions
+                                const new_data=data
+                                if(checked){
+                                    new_permissions=[...new_data, "specific_is_user_pp", "tor_pp_validasi", "pengadaan_pp_execute", "pengadaan_pp_upload"]
+                                } else {
+                                    new_permissions=new_data.filter(f=>!["specific_is_user_pp", "tor_pp_validasi", "pengadaan_pp_execute", "pengadaan_pp_upload"].includes(f))
+                                }
+                                setData(new_permissions)
+                            }}
+                        />
+                        <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Jadikan User sebagai Pejabat Pengadaan (PP)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer p-1 rounded">
+                        <Checkbox
                             checked={data.includes("specific_pic")}
                             onCheckedChange={(checked)=>{
                                 let new_permissions
@@ -1611,6 +1627,22 @@ const PermissionForm=({data, setData})=>{
                             }}
                         />
                         <span className="text-sm text-gray-700 dark:text-gray-400">Validasi TOR & RAB (Wakil Dekan)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer p-1 rounded">
+                        <Checkbox
+                            checked={data.includes("tor_pp_validasi")}
+                            onCheckedChange={(checked) => {
+                                let new_permissions
+                                const new_data=data
+                                if (checked) {
+                                    new_permissions=[...new_data.filter(f=>f!="specific_is_user_pp"), "specific_is_user_pp", "tor_pp_validasi"]
+                                } else {
+                                    new_permissions = data.filter(f => f !== "tor_pp_validasi")
+                                }
+                                setData(new_permissions)
+                            }}
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-400">Validasi TOR & RAB / HPS (Pejabat Pengadaan)</span>
                     </label>
                 </div>
             </div>
