@@ -4,93 +4,99 @@ namespace App\Repositories;
 
 use App\Models\TorModel;
 
-class TorRepo{
-
+class TorRepo
+{
     public static function get($id)
     {
-        //query
-        $query=TorModel::with([
-            "kegiatan_detail", 
-            "kegiatan_detail.kegiatan", 
-            "kegiatan_detail.user_pic_kegiatan", 
-            "kegiatan_detail.user_pic",
-            "iku", 
-            "ik", 
-            "p", 
-            "program_studi"
+        $query = TorModel::with([
+            'kegiatan_detail', 
+            'kegiatan_detail.kegiatan', 
+            'kegiatan_detail.user_pic_kegiatan', 
+            'kegiatan_detail.user_pic',
+            'iku', 
+            'ik', 
+            'p', 
+            'program_studi'
         ])->find($id);
 
         return $query ? $query->toArray() : [];
     }
-    public static function gets($params)
+
+    public static function gets($params = [])
     {
-        //params
-        $params['per_page']=isset($params['per_page'])?trim($params['per_page']):"";
-        $params['q']=isset($params['q'])?$params['q']:"";
-        // $params['tahun']=isset($params['tahun'])?$params['tahun']:"";
-        // $params['program_studi_id']=isset($params['program_studi_id'])?$params['program_studi_id']:"";
-        $params['status_ajuan']=isset($params['status_ajuan'])?$params['status_ajuan']:"";
-        $params['wakil_dekan_id']=isset($params['wakil_dekan_id'])?$params['wakil_dekan_id']:"";
-        $params['exists_memo_cair_status_ajuan']=isset($params['exists_memo_cair_status_ajuan'])?$params['exists_memo_cair_status_ajuan']:"";
+        $per_page = !empty($params['per_page']) ? (int) $params['per_page'] : 15;
+        $q = isset($params['q']) ? trim($params['q']) : '';
+        $tahun = isset($params['tahun']) ? trim($params['tahun']) : '';
+        $program_studi_id = isset($params['program_studi_id']) ? trim($params['program_studi_id']) : '';
+        $status_ajuan = isset($params['status_ajuan']) ? $params['status_ajuan'] : '';
+        $wakil_dekan_id = isset($params['wakil_dekan_id']) ? $params['wakil_dekan_id'] : '';
+        $exists_memo_cair_status_ajuan = isset($params['exists_memo_cair_status_ajuan']) ? $params['exists_memo_cair_status_ajuan'] : '';
 
-        //columns
-        $columns=[];
-
-        //query
-        $query=TorModel::with([
-            "kegiatan_detail", 
-            "kegiatan_detail.kegiatan", 
-            "kegiatan_detail.user_pic_kegiatan", 
-            "kegiatan_detail.user_pic",
-            "iku", 
-            "ik", 
-            "p", 
-            "program_studi"
+        // Query dengan relasi lengkap
+        $query = TorModel::with([
+            'kegiatan_detail', 
+            'kegiatan_detail.kegiatan', 
+            'kegiatan_detail.user_pic_kegiatan', 
+            'kegiatan_detail.user_pic',
+            'iku', 
+            'ik', 
+            'p', 
+            'program_studi'
         ]);
-        //--column like
-        $query=$query->where(function($q)use($columns, $params){
-            foreach($columns as $idx=>$value){
-                if($idx==0){
-                    $q->where($value, "LIKE", "%".$params['q']."%");
-                    continue;
-                }
 
-                $q->orWhere($value, "LIKE", "%".$params['q']."%");
-            }
-        });
-        //--memo cair status_ajuan
-        if($params['exists_memo_cair_status_ajuan']!=""){
-            $query->whereHas("memo_cair", function($q)use($params){
-                $q->where("status_ajuan", $params['exists_memo_cair_status_ajuan']);
+        // 1. Pencarian keyword (q)
+        if ($q !== '') {
+            $query->where(function ($query_q) use ($q) {
+                $query_q->whereHas('kegiatan_detail', function ($kd) use ($q) {
+                    $kd->where('nama_kegiatan_detail', 'LIKE', "%{$q}%")
+                       ->orWhereHas('kegiatan', function ($k) use ($q) {
+                           $k->where('nama_kegiatan', 'LIKE', "%{$q}%");
+                       });
+                })
+                ->orWhereHas('program_studi', function ($ps) use ($q) {
+                    $ps->where('nama_program_studi', 'LIKE', "%{$q}%");
+                });
             });
         }
-        // //--tahun
-        // if($params['tahun']!=""){
-        //     $query=$query->where("tahun", $params['tahun']);
-        // }
-        // //--program studi
-        // if($params['program_studi_id']!=""){
-        //     $query=$query->where("program_studi_id", $params['program_studi_id']);
-        // }
-        //--status ajuan
-        if(!empty($params['status_ajuan'])){
-            if (is_array($params['status_ajuan'])) {
-                $query->whereIn("status_ajuan", $params['status_ajuan']);
-            } elseif (str_contains($params['status_ajuan'], ',')) {
-                $statuses = array_map('trim', explode(',', $params['status_ajuan']));
-                $query->whereIn("status_ajuan", $statuses);
+
+        // 2. Filter Tahun (relasi kegiatan_detail -> kegiatan -> tahun)
+        if ($tahun !== '') {
+            $query->whereHas('kegiatan_detail.kegiatan', function ($kQuery) use ($tahun) {
+                $kQuery->where('tahun', $tahun);
+            });
+        }
+
+        // 3. Filter Program Studi
+        if ($program_studi_id !== '') {
+            $query->where('program_studi_id', $program_studi_id);
+        }
+
+        // 4. Filter Status Ajuan
+        if (!empty($status_ajuan)) {
+            if (is_array($status_ajuan)) {
+                $query->whereIn('status_ajuan', $status_ajuan);
+            } elseif (str_contains($status_ajuan, ',')) {
+                $statuses = array_map('trim', explode(',', $status_ajuan));
+                $query->whereIn('status_ajuan', $statuses);
             } else {
-                $query->where("status_ajuan", $params['status_ajuan']);
+                $query->where('status_ajuan', $status_ajuan);
             }
         }
-        //--wakil dekan
-        if($params['wakil_dekan_id']!=""){
-            $query=$query->where("wakil_dekan_id", $params['wakil_dekan_id']);
-        }
-        
-        $query=$query->orderByDesc("id");
 
-        //return
-        return $query->paginate($params['per_page'])->toArray();
+        // 5. Filter Wakil Dekan ID
+        if ($wakil_dekan_id !== '') {
+            $query->where('wakil_dekan_id', $wakil_dekan_id);
+        }
+
+        // 6. Filter Memo Cair Status Ajuan
+        if ($exists_memo_cair_status_ajuan !== '') {
+            $query->whereHas('memo_cair', function ($mc) use ($exists_memo_cair_status_ajuan) {
+                $mc->where('status_ajuan', $exists_memo_cair_status_ajuan);
+            });
+        }
+
+        $query->orderByDesc('id');
+
+        return $query->paginate($per_page)->toArray();
     }
 }

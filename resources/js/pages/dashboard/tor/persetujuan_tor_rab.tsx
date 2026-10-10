@@ -38,6 +38,7 @@ const options_status = [
     { value: "sent", label: "Persetujuan Koordinator", permission: "tor_koordinator_validasi" },
     { value: "koordinator_applied", label: "Persetujuan Pejabat Pengadaan (PP)", permission: "tor_pp_validasi" },
     { value: "pp_applied,koordinator_applied,keuangan_applied", label: "Persetujuan Wakil Dekan II", permission: "tor_wakil_dekan_validasi" },
+    { value: "", label: "Semua Tahap Persetujuan", permission: "" },
 ]
 
 const options_tahun = [
@@ -75,8 +76,11 @@ export default function PersetujuanTorRab() {
     let defaultStatus = ""
     const userRole = auth.user?.role
     const permissions = auth.user?.permissions || []
+    const isSuperAdmin = userRole === "admin" || userRole === "superadmin" || auth.user?.is_admin
 
-    if (userRole === "koordinator" || permissions.includes("tor_koordinator_validasi") || permissions.includes("specific_is_user_koordinator")) {
+    if (isSuperAdmin) {
+        defaultStatus = "sent"
+    } else if (userRole === "koordinator" || permissions.includes("tor_koordinator_validasi") || permissions.includes("specific_is_user_koordinator")) {
         defaultStatus = "sent,koordinator_applied,koordinator_revisi,keuangan_applied,keuangan_revisi,wakil_dekan_applied,wakil_dekan_revisi"
     } else if (userRole === "pejabat_pengadaan" || permissions.includes("tor_pp_validasi") || permissions.includes("specific_is_user_pp")) {
         defaultStatus = "koordinator_applied,pp_applied,pp_revisi,wakil_dekan_applied"
@@ -180,10 +184,15 @@ const TableApproval = (props: any) => {
         const map: any = {
             draft: { label: "Draft", bg: "bg-slate-100 text-slate-700 border-slate-300" },
             sent: { label: "Menunggu Koordinator", bg: "bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800" },
-            koordinator_applied: { label: "Menunggu Wakil Dekan", bg: "bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" },
+            koordinator_applied: { label: "Menunggu PP / Wakil Dekan", bg: "bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" },
             koordinator_revisi: { label: "Revisi Koordinator", bg: "bg-red-50 text-red-900 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800" },
+            pp_applied: { label: "Menunggu Wakil Dekan", bg: "bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" },
+            pp_revisi: { label: "Revisi PP", bg: "bg-red-50 text-red-900 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800" },
             keuangan_applied: { label: "Menunggu Wakil Dekan", bg: "bg-blue-50 text-blue-900 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" },
             keuangan_revisi: { label: "Perlu Revisi", bg: "bg-red-50 text-red-900 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800" },
+            proses_pengadaan: { label: "Proses Pengadaan PP", bg: "bg-indigo-50 text-indigo-900 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 font-semibold" },
+            dokumen_terupload: { label: "BAST Terunggah PP", bg: "bg-teal-50 text-teal-900 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800 font-semibold" },
+            selesai: { label: "Selesai (Pengadaan)", bg: "bg-emerald-50 text-emerald-900 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 font-extrabold" },
             wakil_dekan_applied: { label: "Disetujui Wakil Dekan", bg: "bg-emerald-50 text-emerald-900 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 font-extrabold" },
             wakil_dekan_revisi: { label: "Revisi Wakil Dekan", bg: "bg-red-50 text-red-900 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800" }
         }
@@ -195,8 +204,8 @@ const TableApproval = (props: any) => {
         )
     }
 
-    const availableStatus = options_status.filter(f => auth.user?.permissions?.includes(f.permission))
-    const statusOptions = availableStatus.length > 0 ? availableStatus : options_status
+    const availableStatus = options_status.filter(f => !f.permission || auth.user?.permissions?.includes(f.permission))
+    const statusOptions = isAdmin ? options_status : (availableStatus.length > 0 ? availableStatus : options_status)
 
     const isAdmin = auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin
 
@@ -220,8 +229,8 @@ const TableApproval = (props: any) => {
                     <div className="w-full sm:w-44">
                         <Select
                             options={options_tahun}
-                            value={options_tahun.find(f => f.value === props.filter.tahun) || options_tahun[2]}
-                            onChange={(e: any) => props.setFilter({ ...props.filter, tahun: e.value, page: 1 })}
+                            value={options_tahun.find(f => f.value === props.filter.tahun) || options_tahun[0]}
+                            onChange={(e: any) => props.setFilter({ ...props.filter, tahun: e?.value ?? "", page: 1 })}
                             className="text-xs font-bold"
                             placeholder="Pilih Tahun..."
                         />
@@ -260,8 +269,9 @@ const TableApproval = (props: any) => {
                         <>
                             {data.map((item: any, idx: number) => {
                                 const canKoorReview = (item.status_ajuan === "sent") && (auth.user?.permissions?.includes("tor_koordinator_validasi") || isAdmin)
+                                const canPPReview = (item.status_ajuan === "koordinator_applied") && (auth.user?.permissions?.includes("tor_pp_validasi") || isAdmin || userRole === "pejabat_pengadaan")
                                 const canKeuReview = false
-                                const canWadekReview = (item.status_ajuan === "koordinator_applied" || item.status_ajuan === "keuangan_applied") && (auth.user?.permissions?.includes("tor_wakil_dekan_validasi") || isAdmin || userRole === "wakil_dekan")
+                                const canWadekReview = (item.status_ajuan === "pp_applied" || item.status_ajuan === "koordinator_applied" || item.status_ajuan === "keuangan_applied") && (auth.user?.permissions?.includes("tor_wakil_dekan_validasi") || isAdmin || userRole === "wakil_dekan")
 
                                 return (
                                     <TableRow key={`tor-appr-${item.id || idx}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 border-b border-slate-200/80 dark:border-slate-800 text-xs transition-colors">
@@ -343,7 +353,7 @@ const TableApproval = (props: any) => {
                                                         >
                                                             <Link href={targetUrl}>
                                                                 <Eye className="size-3.5 text-amber-400" />
-                                                                <span>{(canKoorReview || canKeuReview || canWadekReview) ? (isHps ? `Tinjau HPS ${kategori === 'bhp' ? 'BHP' : 'Inventaris'}` : "Tinjau & Validasi") : "Review"}</span>
+                                                                <span>{(canKoorReview || canKeuReview || canWadekReview || canPPReview) ? (isHps ? `Tinjau HPS ${kategori === 'bhp' ? 'BHP' : 'Inventaris'}` : "Tinjau & Validasi") : "Review"}</span>
                                                             </Link>
                                                         </Button>
                                                     );

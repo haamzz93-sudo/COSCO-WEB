@@ -1504,8 +1504,8 @@ Ketentuan Khusus Referensi Harga E-Katalog LKPP / INAPROC:
         $validation=Validator::make($req, [
             'per_page'      =>"nullable|integer|min:1",
             'q'             =>"nullable",
-            // 'tahun'         =>"nullable",
-            // 'program_studi_id'  =>"nullable",
+            'tahun'         =>"nullable",
+            'program_studi_id'  =>"nullable",
             'status_ajuan'  =>"nullable",
             'wakil_dekan_id'=>"nullable"
         ]);
