@@ -959,6 +959,18 @@ class TorController extends Controller
             return response()->json(['error' => "NOT_FOUND"], 404);
         }
 
+        // Validasi file dan batas ukuran maksimal 20 MB
+        $validation = Validator::make($request->all(), [
+            'file_dokumen_pengadaan' => 'nullable|file|max:20480',
+            'catatan' => 'nullable|string'
+        ]);
+        if ($validation->fails()) {
+            return response()->json([
+                'error' => "VALIDATION_ERROR",
+                'data' => $validation->errors()->first()
+            ], 422);
+        }
+
         $filePath = null;
         if ($request->hasFile('file_dokumen_pengadaan')) {
             $file = $request->file('file_dokumen_pengadaan');
@@ -969,7 +981,7 @@ class TorController extends Controller
             }
             $file->move($destPath, $fileName);
             $filePath = '/uploads/pengadaan/' . $fileName;
-        } elseif (!empty($req['file_dokumen_pengadaan'])) {
+        } elseif (!empty($req['file_dokumen_pengadaan']) && is_string($req['file_dokumen_pengadaan'])) {
             $filePath = $req['file_dokumen_pengadaan'];
         }
 
@@ -984,7 +996,8 @@ class TorController extends Controller
 
         return response()->json([
             'status' => "ok",
-            'message' => "Dokumen BAST pengadaan berhasil diunggah. Pengadaan tuntas 100%."
+            'message' => "Dokumen BAST pengadaan berhasil diunggah. Pengadaan tuntas 100%.",
+            'file_path' => $filePath
         ]);
     }
 

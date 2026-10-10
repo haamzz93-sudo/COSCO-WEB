@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
-import { Bot, PanelRight, PanelRightClose, ArrowLeft, ChevronRight, ArrowRight, Clock, UserCheck, FolderKanban, Coins, Target, ListChecks, Layers, Check, ChevronDown, Edit2, Ellipsis, EllipsisIcon, EllipsisVertical, PlusIcon, Trash2, X, AlertTriangle, CheckCircle2, Sparkles, RefreshCw, FileCheck2 } from "lucide-react"
+import { Bot, PanelRight, PanelRightClose, ArrowLeft, ChevronRight, ArrowRight, Clock, UserCheck, FolderKanban, Coins, Target, ListChecks, Layers, Check, ChevronDown, Edit2, Ellipsis, EllipsisIcon, EllipsisVertical, PlusIcon, Trash2, X, AlertTriangle, CheckCircle2, Sparkles, RefreshCw, FileCheck2, UploadCloud, FileText } from "lucide-react"
 import { ik_request, iku_request, mak_request, p_request, request_program_studi, satuan_request, tor_request, request_user, kelompok_belanja_request } from "@/configs/request"
 import { Head, Link, router, usePage } from "@inertiajs/react"
 import { useEffect, useState } from "react"
@@ -87,6 +87,7 @@ export default function Page() {
     const [rab, setRab]=useState([])
     
     const [showRightPanel, setShowRightPanel]=useState(true)
+    const [modalUploadBAST, setModalUploadBAST] = useState(false)
     const [modal_tambah_kategori, setModalTambahKategori]=useState({
         open:false,
         data:{
@@ -493,7 +494,18 @@ export default function Page() {
                         
                     </div>
                 </SidebarInset>
-            </SidebarProvider>
+            
+            {/* MODAL UPLOAD DOKUMEN PENGADAAN (TAHAP 6) */}
+            <ModalUploadDokumenPengadaan
+                open={modalUploadBAST}
+                onClose={() => setModalUploadBAST(false)}
+                tor={detail}
+                onSuccess={() => {
+                    setModalUploadBAST(false)
+                    window.location.reload()
+                }}
+            />
+        </SidebarProvider>
 
             {/* MODAL DIALOG TAMBAH */}
 
@@ -1658,35 +1670,23 @@ const Rab=(props)=>{
                                                     <Button
                                                         type="button"
                                                         className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
-                                                        onClick={() => {
-                                                            MySwal.fire({
-                                                                title: "Upload Dokumen BAST & Transaksi",
-                                                                html: `
-                                                                    <div class="text-left text-xs space-y-2 mt-2">
-                                                                        <p class="text-slate-600 font-medium">
-                                                                            Masukkan link berkas atau nama dokumen transaksi resmi (Surat Pesanan/SPK, Faktur, BAST Barang):
-                                                                        </p>
-                                                                    </div>
-                                                                `,
-                                                                input: "text",
-                                                                inputPlaceholder: "Contoh: /uploads/bast/BAST_Inventaris_UNS_2026.pdf atau link Google Drive...",
-                                                                showCancelButton: true,
-                                                                confirmButtonText: "Simpan & Tutup Kegiatan",
-                                                                cancelButtonText: "Batal",
-                                                                confirmButtonColor: "#047857"
-                                                            }).then((res: any) => {
-                                                                if (res.isConfirmed && res.value) {
-                                                                    tor_request.upload_dokumen_pengadaan(props.tor.id, { file_dokumen_pengadaan: res.value }).then(() => {
-                                                                        toast.success("Dokumen BAST berhasil diunggah! Pengadaan selesai tuntas.", { position: "bottom-center" })
-                                                                        window.location.reload()
-                                                                    }).catch(() => {
-                                                                        toast.error("Gagal menyimpan dokumen pengadaan", { position: "bottom-center" })
-                                                                    })
-                                                                }
-                                                            })
-                                                        }}
+                                                        onClick={() => setModalUploadBAST(true)}
                                                     >
+                                                        <UploadCloud className="size-4" />
                                                         <span>Upload BAST Belanja (Tahap 6)</span>
+                                                    </Button>
+                                                )}
+                                                {props.tor?.file_dokumen_pengadaan && (
+                                                    <Button
+                                                        type="button"
+                                                        asChild
+                                                        variant="outline"
+                                                        className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950 font-bold text-xs h-10 px-3.5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <a href={props.tor.file_dokumen_pengadaan} target="_blank" rel="noopener noreferrer">
+                                                            <FileText className="size-4" />
+                                                            <span>Lihat Berkas BAST</span>
+                                                        </a>
                                                     </Button>
                                                 )}
                                             </>
@@ -2499,3 +2499,202 @@ const ModalAjuanWakilDekan=(props)=>{
     }}
     className="col-span-3 px-0.5 w-full"
 /> */}
+function ModalUploadDokumenPengadaan({ open, onClose, tor, onSuccess }: any) {
+    const [file, setFile] = useState<File | null>(null)
+    const [catatan, setCatatan] = useState("")
+    const [loading, setLoading] = useState(false)
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        accept: {
+            'application/pdf': ['.pdf'],
+            'application/msword': ['.doc'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'application/vnd.ms-excel': ['.xls'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            'application/zip': ['.zip'],
+            'application/vnd.rar': ['.rar'],
+            'image/*': ['.jpg', '.jpeg', '.png']
+        },
+        maxSize: 20 * 1024 * 1024, // 20 MB
+        maxFiles: 1,
+        onDrop: (acceptedFiles) => {
+            if (acceptedFiles.length > 0) {
+                setFile(acceptedFiles[0])
+            }
+        },
+        onDropRejected: (rejections) => {
+            if (rejections.length > 0) {
+                const err = rejections[0].errors[0]
+                if (err?.code === 'file-too-large') {
+                    toast.error("Ukuran file melebihi batas maksimal 20 MB!", { position: "bottom-center" })
+                } else {
+                    toast.error(err?.message || "Format file tidak didukung", { position: "bottom-center" })
+                }
+            }
+        }
+    })
+
+    const handleUpload = async () => {
+        if (!file && !catatan.trim()) {
+            toast.error("Silakan pilih berkas dokumen BAST atau isi keterangan transaksi!", { position: "bottom-center" })
+            return
+        }
+
+        const torId = tor?.id || tor?.kegiatan_detail_id
+        if (!torId) {
+            toast.error("ID Dokumen tidak ditemukan!", { position: "bottom-center" })
+            return
+        }
+
+        setLoading(true)
+        try {
+            const formData = new FormData()
+            if (file) {
+                formData.append('file_dokumen_pengadaan', file)
+            }
+            if (catatan) {
+                formData.append('catatan', catatan)
+            }
+
+            await tor_request.upload_dokumen_pengadaan(torId, formData)
+            toast.success("Dokumen BAST berhasil diunggah! Pengadaan selesai tuntas.", { position: "bottom-center" })
+            onSuccess?.()
+            onClose?.()
+        } catch (err: any) {
+            const msg = err.response?.data?.data || err.response?.data?.message || "Gagal mengunggah dokumen pengadaan"
+            toast.error(msg, { position: "bottom-center" })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const formatSize = (bytes: number) => {
+        if (bytes < 1024) return bytes + ' B'
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+    }
+
+    return (
+        <Modal open={open} onClose={loading ? () => {} : onClose}>
+            <ModalBackdrop />
+            <ModalDialog className="sm:max-w-lg w-full p-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl">
+                <ModalHeader className="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <ModalTitle className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <UploadCloud className="size-4 text-emerald-600 dark:text-emerald-400" />
+                            <span>Upload Dokumen BAST & Transaksi Belanja</span>
+                        </ModalTitle>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            Tahap 6: Unggah berkas serah terima barang (BAST, SPK/Faktur) untuk menutup pengadaan.
+                        </p>
+                    </div>
+                    {!loading && (
+                        <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <X className="size-4" />
+                        </button>
+                    )}
+                </ModalHeader>
+
+                <div className="p-6 space-y-4">
+                    {/* DRAG & DROP ZONE */}
+                    {!file ? (
+                        <div
+                            {...getRootProps()}
+                            className={
+                                "border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all " +
+                                (isDragActive 
+                                    ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/20" 
+                                    : "border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:bg-slate-50/60 dark:hover:bg-slate-800/40")
+                            }
+                        >
+                            <input {...getInputProps()} />
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300">
+                                    <UploadCloud className="size-8" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        Tarik dan lepas dokumen BAST di sini, atau <span className="text-emerald-700 dark:text-emerald-400 underline">klik untuk memilih</span>
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                        Maksimal 20 MB • Format: PDF, DOCX, XLSX, ZIP, JPG, PNG
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs shrink-0">
+                                    <FileText className="size-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                                        {file.name}
+                                    </p>
+                                    <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                        {formatSize(file.size)} • Siap diunggah ke database
+                                    </p>
+                                </div>
+                            </div>
+                            {!loading && (
+                                <button
+                                    type="button"
+                                    onClick={() => setFile(null)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Hapus file"
+                                >
+                                    <Trash2 className="size-4" />
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* INPUT NOMOR BAST / KETERANGAN */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Nomor BAST / Catatan Belanja (Opsional)
+                        </Label>
+                        <Input
+                            placeholder="Contoh: BAST No. 042/UN27.46/PL/2026 atau Catatan Serah Terima..."
+                            value={catatan}
+                            onChange={(e) => setCatatan(e.target.value)}
+                            className="text-xs h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+
+                <ModalFooter className="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={loading}
+                        className="text-xs h-9 px-4 rounded-xl cursor-pointer"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={handleUpload}
+                        disabled={loading || (!file && !catatan.trim())}
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs h-9 px-5 rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <>
+                                <RefreshCw className="size-3.5 animate-spin" />
+                                <span>Mengunggah...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="size-3.5" />
+                                <span>Simpan & Tutup Kegiatan</span>
+                            </>
+                        )}
+                    </Button>
+                </ModalFooter>
+            </ModalDialog>
+        </Modal>
+    )
+}
