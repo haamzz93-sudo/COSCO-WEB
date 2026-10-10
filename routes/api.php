@@ -138,6 +138,9 @@ Route::controller(TorController::class)->prefix("/tors")->group(function(){
     Route::put("/validasi_koordinator/{id}", "validasi_koordinator");
     Route::put("/validasi_keuangan/{id}", "validasi_keuangan");
     Route::put("/validasi_wakil_dekan/{id}", "validasi_wakil_dekan");
+    Route::put("/validasi_pp/{id}", "validasi_pp");
+    Route::put("/proses_pengadaan/{id}", "proses_pengadaan");
+    Route::post("/upload_dokumen_pengadaan/{id}", "upload_dokumen_pengadaan");
     Route::delete("/{id}", "delete");
     Route::get("/", "gets");
     Route::get("/{id}", "get");

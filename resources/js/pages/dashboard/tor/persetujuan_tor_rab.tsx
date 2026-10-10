@@ -36,7 +36,8 @@ import { toast } from "sonner"
 
 const options_status = [
     { value: "sent", label: "Persetujuan Koordinator", permission: "tor_koordinator_validasi" },
-    { value: "koordinator_applied,keuangan_applied", label: "Persetujuan Wakil Dekan", permission: "tor_wakil_dekan_validasi" },
+    { value: "koordinator_applied", label: "Persetujuan Pejabat Pengadaan (PP)", permission: "tor_pp_validasi" },
+    { value: "pp_applied,koordinator_applied,keuangan_applied", label: "Persetujuan Wakil Dekan II", permission: "tor_wakil_dekan_validasi" },
 ]
 
 const options_tahun = [
@@ -77,8 +78,10 @@ export default function PersetujuanTorRab() {
 
     if (userRole === "koordinator" || permissions.includes("tor_koordinator_validasi") || permissions.includes("specific_is_user_koordinator")) {
         defaultStatus = "sent,koordinator_applied,koordinator_revisi,keuangan_applied,keuangan_revisi,wakil_dekan_applied,wakil_dekan_revisi"
+    } else if (userRole === "pejabat_pengadaan" || permissions.includes("tor_pp_validasi") || permissions.includes("specific_is_user_pp")) {
+        defaultStatus = "koordinator_applied,pp_applied,pp_revisi,wakil_dekan_applied"
     } else if (userRole === "wakil_dekan" || permissions.includes("tor_wakil_dekan_validasi") || permissions.includes("specific_is_user_wakil_dekan")) {
-        defaultStatus = "koordinator_applied,keuangan_applied,wakil_dekan_applied,wakil_dekan_revisi"
+        defaultStatus = "pp_applied,koordinator_applied,keuangan_applied,wakil_dekan_applied,wakil_dekan_revisi"
     } else if (userRole === "keuangan" || permissions.includes("tor_keuangan_validasi") || permissions.includes("specific_is_user_keuangan")) {
         defaultStatus = "koordinator_applied,keuangan_applied,keuangan_revisi,wakil_dekan_applied,wakil_dekan_revisi"
     }

@@ -811,7 +811,7 @@ class TorController extends Controller
         }
 
         //VALIDATION APPLIED
-        if(!in_array($id_data['status_ajuan'], ["koordinator_applied", "keuangan_applied"])){
+        if(!in_array($id_data['status_ajuan'], ["koordinator_applied", "keuangan_applied", "pp_applied"])){
             return response()->json([
                 'error' =>"VALIDATION_ERROR",
                 'data'  =>"Status TOR saat ini belum disetujui Koordinator (menunggu validasi Koordinator)."
@@ -855,6 +855,136 @@ class TorController extends Controller
 
         return response()->json([
             'status'=>"ok"
+        ]);
+    }
+
+    public function validasi_pp(Request $request, $id)
+    {
+        $login_data = $request->user();
+        $req = $request->all();
+
+        // ROLE AUTHENTICATION
+        if (!$login_data->checkIsAdmin() && Gate::denies('tor_pp_validasi', $login_data)) {
+            return response('Not Allowed.', 403);
+        }
+
+        // VALIDATION ID
+        $id_data = TorModel::with('kegiatan_detail')->find($id);
+        if (!isset($id_data)) {
+            $id_data = TorModel::with('kegiatan_detail')->where('kegiatan_detail_id', $id)->first();
+        }
+        if (!isset($id_data)) {
+            return response()->json([
+                'error' => "VALIDATION_ERROR",
+                'data'  => "Data TOR tidak ditemukan."
+            ], 400);
+        }
+        $id = $id_data->id;
+
+        // VALIDATION STATUS
+        if (!in_array($id_data['status_ajuan'], ["koordinator_applied"])) {
+            return response()->json([
+                'error' => "VALIDATION_ERROR",
+                'data'  => "Status usulan saat ini bukan 'koordinator_applied' (menunggu telaah Pejabat Pengadaan)."
+            ], 400);
+        }
+
+        $validation = Validator::make($req, [
+            'status_ajuan' => "required|in:pp_applied,pp_revisi",
+            'catatan_pp'   => "nullable"
+        ]);
+        if ($validation->fails()) {
+            return response()->json([
+                'error' => "VALIDATION_ERROR",
+                'data'  => $validation->errors()->first()
+            ], 400);
+        }
+
+        DB::transaction(function() use ($req, $id) {
+            $data_update = [
+                'status_ajuan' => $req['status_ajuan']
+            ];
+            if (isset($req['catatan_pp'])) {
+                $data_update['catatan_pp'] = $req['catatan_pp'];
+            }
+            TorModel::find($id)->update($data_update);
+        });
+
+        return response()->json([
+            'status' => "ok",
+            'message' => "Validasi HPS oleh Pejabat Pengadaan berhasil diproses."
+        ]);
+    }
+
+    public function proses_pengadaan(Request $request, $id)
+    {
+        $login_data = $request->user();
+
+        if (!$login_data->checkIsAdmin() && Gate::denies('pengadaan_pp_execute', $login_data) && Gate::denies('tor_pp_validasi', $login_data)) {
+            return response('Not Allowed.', 403);
+        }
+
+        $id_data = TorModel::find($id);
+        if (!$id_data) {
+            $id_data = TorModel::where('kegiatan_detail_id', $id)->first();
+        }
+        if (!$id_data) {
+            return response()->json(['error' => "NOT_FOUND"], 404);
+        }
+
+        $id_data->update([
+            'status_pengadaan' => 'proses_pengadaan'
+        ]);
+
+        return response()->json([
+            'status' => "ok",
+            'message' => "Status pengadaan diperbarui: Proses pemesanan rekanan sedang berjalan."
+        ]);
+    }
+
+    public function upload_dokumen_pengadaan(Request $request, $id)
+    {
+        $login_data = $request->user();
+        $req = $request->all();
+
+        if (!$login_data->checkIsAdmin() && Gate::denies('pengadaan_pp_upload', $login_data) && Gate::denies('tor_pp_validasi', $login_data)) {
+            return response('Not Allowed.', 403);
+        }
+
+        $id_data = TorModel::find($id);
+        if (!$id_data) {
+            $id_data = TorModel::where('kegiatan_detail_id', $id)->first();
+        }
+        if (!$id_data) {
+            return response()->json(['error' => "NOT_FOUND"], 404);
+        }
+
+        $filePath = null;
+        if ($request->hasFile('file_dokumen_pengadaan')) {
+            $file = $request->file('file_dokumen_pengadaan');
+            $fileName = 'bast_pengadaan_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $destPath = public_path('uploads/pengadaan');
+            if (!file_exists($destPath)) {
+                @mkdir($destPath, 0777, true);
+            }
+            $file->move($destPath, $fileName);
+            $filePath = '/uploads/pengadaan/' . $fileName;
+        } elseif (!empty($req['file_dokumen_pengadaan'])) {
+            $filePath = $req['file_dokumen_pengadaan'];
+        }
+
+        $data_update = [
+            'status_pengadaan' => 'selesai'
+        ];
+        if ($filePath) {
+            $data_update['file_dokumen_pengadaan'] = $filePath;
+        }
+
+        $id_data->update($data_update);
+
+        return response()->json([
+            'status' => "ok",
+            'message' => "Dokumen BAST pengadaan berhasil diunggah. Pengadaan tuntas 100%."
         ]);
     }
 

@@ -38,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
             'specific_wakil_dekan',
             "specific_is_user_koordinator",
             "specific_is_user_keuangan",
+            "specific_is_user_pp",
             
             // Role
             'role_add',
@@ -101,8 +102,11 @@ class AppServiceProvider extends ServiceProvider
             'tor_pic_update',
             'tor_pic_ajukan',
             'tor_koordinator_validasi',
+            'tor_pp_validasi',
             'tor_keuangan_validasi',
             'tor_wakil_dekan_validasi',
+            'pengadaan_pp_execute',
+            'pengadaan_pp_upload',
             
             // memo cair
             'memo_cair_pic_ajukan',

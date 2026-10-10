@@ -1716,7 +1716,55 @@ const PermissionForm=({data, setData})=>{
                     PEMBAYARAN BENDAHARA
                 </h3>
                 <div className="grid grid-cols-3 gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-1 rounded">
+                    <div className="col-span-3 border border-blue-200 dark:border-blue-900/60 rounded-xl p-3 bg-blue-50/40 dark:bg-blue-950/20 space-y-2 mb-2">
+                          <div className="font-bold text-xs text-blue-950 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                              <ShieldCheck className="size-3.5 text-blue-700 dark:text-blue-400" />
+                              <span>Hak Akses Pejabat Pengadaan (PP) - HPS BHP & Inventaris</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                              <label className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                  <Checkbox
+                                      checked={data.includes("specific_is_user_pp")}
+                                      onCheckedChange={(checked) => {
+                                          let new_permissions = checked ? [...data, "specific_is_user_pp"] : data.filter(f => f !== "specific_is_user_pp")
+                                          setData(new_permissions)
+                                      }}
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-400">Akses Pengadaan (Pejabat Pengadaan)</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                  <Checkbox
+                                      checked={data.includes("tor_pp_validasi")}
+                                      onCheckedChange={(checked) => {
+                                          let new_permissions = checked ? [...data.filter(f=>f!=="specific_is_user_pp"), "specific_is_user_pp", "tor_pp_validasi"] : data.filter(f => f !== "tor_pp_validasi")
+                                          setData(new_permissions)
+                                      }}
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-400">Validasi HPS BHP & Inventaris (PP)</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                  <Checkbox
+                                      checked={data.includes("pengadaan_pp_execute")}
+                                      onCheckedChange={(checked) => {
+                                          let new_permissions = checked ? [...data, "pengadaan_pp_execute"] : data.filter(f => f !== "pengadaan_pp_execute")
+                                          setData(new_permissions)
+                                      }}
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-400">Eksekusi Pesanan Rekanan / E-Katalog</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                  <Checkbox
+                                      checked={data.includes("pengadaan_pp_upload")}
+                                      onCheckedChange={(checked) => {
+                                          let new_permissions = checked ? [...data, "pengadaan_pp_upload"] : data.filter(f => f !== "pengadaan_pp_upload")
+                                          setData(new_permissions)
+                                      }}
+                                  />
+                                  <span className="text-sm text-gray-700 dark:text-gray-400">Unggah Berkas Transaksi & BAST</span>
+                              </label>
+                          </div>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer p-1 rounded">
                         <Checkbox
                             checked={data.includes("specific_is_user_bendahara")}
                             onCheckedChange={(checked) => {

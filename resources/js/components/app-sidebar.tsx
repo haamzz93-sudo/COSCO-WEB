@@ -47,6 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const isKoordinator = userRole === 'koordinator';
     const isKeuangan = userRole === 'keuangan';
     const isWakilDekan = userRole === 'wakil_dekan';
+    const isPP = userRole === 'pejabat_pengadaan' || userRole === 'pp' || userPermissions.includes('specific_is_user_pp') || userPermissions.includes('tor_pp_validasi');
 
     // 1. GRUP PERENCANAAN (DASHBOARD & TOR RAB)
     let perencanaanItems: NavItem[] = [
@@ -62,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
     ];
 
-    if (isSuperAdmin || isSubKor || isKeuangan || isWakilDekan || isKoordinator) {
+    if (isSuperAdmin || isSubKor || isKeuangan || isWakilDekan || isKoordinator || isPP) {
         perencanaanItems.push({
             title: 'Persetujuan TOR RAB',
             href: '/dashboard/tors/persetujuan',

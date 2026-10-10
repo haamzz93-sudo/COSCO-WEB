@@ -106,6 +106,7 @@ class User extends Authenticatable
             "specific_is_user_koordinator",
             "specific_is_user_keuangan",
             "specific_is_user_pic",
+            "specific_is_user_pp",
 
             'kegiatan_add',
             'kegiatan_update',
@@ -118,8 +119,11 @@ class User extends Authenticatable
             'tor_pic_update',
             'tor_pic_ajukan',
             'tor_koordinator_validasi',
+            'tor_pp_validasi',
             'tor_keuangan_validasi',
             'tor_wakil_dekan_validasi',
+            'pengadaan_pp_execute',
+            'pengadaan_pp_upload',
             
             'memo_cair_pic_ajukan',
             'memo_cair_keuangan_validasi',

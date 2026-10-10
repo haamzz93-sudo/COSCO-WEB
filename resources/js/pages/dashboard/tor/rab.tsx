@@ -531,17 +531,20 @@ const Progress = ({ dataSource: data, data: dataAlt }: any) => {
     const isInventaris = kategori === "inventaris"
     const docName = isHps ? `HPS ${isInventaris ? "Inventaris" : "BHP"}` : "TOR RAB"
 
-    const isStep1Done = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep2Done = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep3Done = ["koordinator_applied", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep4Done = ["wakil_dekan_applied"].includes(status)
-    const isStep5Done = status === "wakil_dekan_applied"
+    const statusPengadaan = item?.status_pengadaan || 'draft'
+    const isStep1Done = status !== "draft"
+    const isStep2Done = ["koordinator_applied", "koordinator_revisi", "pp_applied", "pp_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep3Done = ["pp_applied", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep4Done = ["wakil_dekan_applied"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep5Done = statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep6Done = !!item?.file_dokumen_pengadaan || statusPengadaan === "selesai"
+    const isStep7Done = statusPengadaan === "selesai"
 
-    const steps = [
+    const stepsHps = [
         {
             number: 1,
-            title: isHps ? `PIC Menyusun Usulan HPS ${isInventaris ? "Inventaris" : "BHP"}` : "PIC Kegiatan membuat TOR & RAB",
-            subtitle: isHps ? "Penyusunan Rincian Barang HPS" : "Pengerjaan TOR/RAB (Draft)",
+            title: `1. PIC Mengajukan Usulan ${isInventaris ? "Inventaris" : "BHP"}`,
+            subtitle: status === "draft" ? "Penyusunan Rincian Barang & Spesifikasi Teknis (HPS)" : "Usulan HPS Telah Diajukan ke Sistem",
             completed: isStep1Done,
             active: status === "draft",
             isRevisi: false,
@@ -549,7 +552,73 @@ const Progress = ({ dataSource: data, data: dataAlt }: any) => {
         },
         {
             number: 2,
-            title: isHps ? `PIC Ajukan Usulan HPS ${isInventaris ? "Inventaris" : "BHP"}` : "PIC Ajukan TOR RAB",
+            title: status === "koordinator_revisi" ? "2. Revisi Usulan (Koordinator)" : "2. Review dan Validasi Koordinator",
+            subtitle: status === "sent" ? "Menunggu telaah urgensi oleh Koordinator Kampus" : (isStep2Done ? "Telah disetujui Koordinator Kampus Madiun" : "Tahap telaah Koordinator"),
+            completed: isStep2Done,
+            active: status === "sent",
+            isRevisi: status === "koordinator_revisi",
+            note: item?.catatan_koordinator || null
+        },
+        {
+            number: 3,
+            title: status === "pp_revisi" ? "3. Revisi HPS (Pejabat Pengadaan)" : "3. Review dan Validasi PP",
+            subtitle: status === "koordinator_applied" ? "Pejabat Pengadaan menelaah kewajaran HPS & E-Katalog" : (isStep3Done ? "HPS telah divalidasi Pejabat Pengadaan" : "Menunggu telaah Koordinator"),
+            completed: isStep3Done,
+            active: status === "koordinator_applied",
+            isRevisi: status === "pp_revisi",
+            note: item?.catatan_pp || null
+        },
+        {
+            number: 4,
+            title: status === "wakil_dekan_revisi" ? "4. Revisi (Wakil Dekan II)" : "4. Review dan Validasi Wakil Dekan II",
+            subtitle: status === "pp_applied" ? "Menunggu otorisasi final pengadaan oleh Wakil Dekan II" : (isStep4Done ? "Pengadaan telah diotorisasi Wakil Dekan II" : "Menunggu telaah Pejabat Pengadaan"),
+            completed: isStep4Done,
+            active: status === "pp_applied",
+            isRevisi: status === "wakil_dekan_revisi",
+            note: item?.catatan_wakil_dekan || null
+        },
+        {
+            number: 5,
+            title: "5. Proses Pengadaan",
+            subtitle: statusPengadaan === "proses_pengadaan" ? "Sedang dalam proses pemesanan rekanan / E-Katalog" : (isStep5Done ? "Pesanan telah diproses rekanan resmi" : (isStep4Done ? "Siap dieksekusi pemesanan oleh Pejabat Pengadaan" : "Menunggu otorisasi pimpinan")),
+            completed: isStep5Done,
+            active: isStep4Done && statusPengadaan !== "selesai" && !isStep6Done,
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 6,
+            title: "6. Upload Dokumen Transaksi Belanja PP",
+            subtitle: isStep6Done ? "Dokumen transaksi resmi (SPK, Faktur, BAST) telah diunggah" : (isStep5Done ? "Pejabat Pengadaan mengunggah SPK, Faktur, dan BAST" : "Tahap pasca kedatangan barang"),
+            completed: isStep6Done,
+            active: isStep5Done && !isStep6Done,
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 7,
+            title: "7. Selesai",
+            subtitle: isStep7Done ? "Pengadaan tuntas 100%, serah terima barang selesai" : "Menunggu kelengkapan dokumen transaksi belanja",
+            completed: isStep7Done,
+            active: isStep7Done,
+            isRevisi: false,
+            note: null
+        }
+    ]
+
+    const stepsRegular = [
+        {
+            number: 1,
+            title: "PIC Kegiatan membuat TOR & RAB",
+            subtitle: "Pengerjaan TOR/RAB (Draft)",
+            completed: isStep1Done,
+            active: status === "draft",
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 2,
+            title: "PIC Ajukan TOR RAB",
             subtitle: isStep2Done ? `${docName} Diajukan ke Sistem` : `Menunggu pengajuan ${docName}`,
             completed: isStep2Done,
             active: false,
@@ -584,6 +653,8 @@ const Progress = ({ dataSource: data, data: dataAlt }: any) => {
             note: null
         }
     ]
+
+    const steps = isHps ? stepsHps : stepsRegular
 
     return (
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
@@ -1411,8 +1482,10 @@ const Rab=(props)=>{
                                                             let nextStatus = "sent"
                                                             if (props.tor?.status_ajuan === "keuangan_revisi") {
                                                                 nextStatus = "koordinator_applied"
+                                                            } else if (props.tor?.status_ajuan === "pp_revisi") {
+                                                                nextStatus = "sent"
                                                             } else if (props.tor?.status_ajuan === "wakil_dekan_revisi") {
-                                                                nextStatus = "keuangan_applied"
+                                                                nextStatus = isHps ? "pp_applied" : "keuangan_applied"
                                                             }
 
                                                             edit_data.mutate(
@@ -1452,7 +1525,7 @@ const Rab=(props)=>{
                                             }}
                                         >
                                             <span>
-                                                {["koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi"].includes(props.tor?.status_ajuan) 
+                                                {["koordinator_revisi", "keuangan_revisi", "pp_revisi", "wakil_dekan_revisi"].includes(props.tor?.status_ajuan) 
                                                     ? "Simpan & Kirim Ulang Hasil Revisi" 
                                                     : `Simpan Draft & Ajukan ${docLabel}`}
                                             </span>
@@ -1464,14 +1537,16 @@ const Rab=(props)=>{
                             {(() => {
                                 const status = props.tor?.status_ajuan || "draft"
                                 const canKoor = (status === "sent") && (auth.user?.permissions?.includes("tor_koordinator_validasi") || auth.user?.permissions?.includes("specific_is_user_koordinator") || auth.user?.role === "koordinator" || auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin)
+                                const canPP = isHps && (status === "koordinator_applied") && (auth.user?.permissions?.includes("tor_pp_validasi") || auth.user?.role === "pejabat_pengadaan" || auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin)
                                 const canKeu = false
-                                const canWadek = (status === "koordinator_applied" || status === "keuangan_applied") && (auth.user?.permissions?.includes("tor_wakil_dekan_validasi") || auth.user?.permissions?.includes("specific_is_user_wakil_dekan") || auth.user?.role === "wakil_dekan" || auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin)
+                                const canWadek = (isHps ? status === "pp_applied" : (status === "koordinator_applied" || status === "keuangan_applied")) && (auth.user?.permissions?.includes("tor_wakil_dekan_validasi") || auth.user?.permissions?.includes("specific_is_user_wakil_dekan") || auth.user?.role === "wakil_dekan" || auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin)
+                                const canExecutePP = isHps && (status === "wakil_dekan_applied") && (auth.user?.permissions?.includes("pengadaan_pp_execute") || auth.user?.permissions?.includes("tor_pp_validasi") || auth.user?.role === "pejabat_pengadaan" || auth.user?.is_admin || auth.user?.role === "admin" || auth.user?.role === "superadmin")
 
-                                if (!canKoor && !canKeu && !canWadek) return null
+                                if (!canKoor && !canPP && !canKeu && !canWadek && !canExecutePP) return null
 
                                 const handleApprovalAction = (isApprove: boolean) => {
-                                    let roleLabel = canKoor ? "Koordinator" : canKeu ? "Keuangan" : "Wakil Dekan"
-                                    let actionTitle = isApprove ? `Setujui TOR & RAB (${roleLabel})` : `Kembalikan / Perlu Revisi (${roleLabel})`
+                                    let roleLabel = canKoor ? "Koordinator" : canPP ? "Pejabat Pengadaan (PP)" : canKeu ? "Keuangan" : "Wakil Dekan II"
+                                    let actionTitle = isApprove ? `Setujui ${isHps ? "HPS" : "TOR & RAB"} (${roleLabel})` : `Kembalikan / Perlu Revisi (${roleLabel})`
                                     
                                     MySwal.fire({
                                         title: actionTitle,
@@ -1507,20 +1582,25 @@ const Rab=(props)=>{
                                             let targetStatus = ""
                                             if (isApprove) {
                                                 if (canKoor) targetStatus = "koordinator_applied"
+                                                if (canPP) targetStatus = "pp_applied"
                                                 if (canKeu) targetStatus = "keuangan_applied"
                                                 if (canWadek) targetStatus = "wakil_dekan_applied"
                                             } else {
                                                 if (canKoor) targetStatus = "koordinator_revisi"
+                                                if (canPP) targetStatus = "pp_revisi"
                                                 if (canKeu) targetStatus = "keuangan_revisi"
                                                 if (canWadek) targetStatus = "wakil_dekan_revisi"
                                             }
 
                                             let payload: any = { id: props.tor.id, status_ajuan: targetStatus }
                                             if (canKoor) payload.catatan_koordinator = catatan
+                                            if (canPP) payload.catatan_pp = catatan
                                             if (canKeu) payload.catatan_keuangan = catatan
                                             if (canWadek) payload.catatan_wakil_dekan = catatan
 
-                                            const reqAction = canKoor
+                                            const reqAction = canPP
+                                                ? tor_request.validasi_pp(props.tor.id, payload)
+                                                : canKoor
                                                 ? tor_request.validasi_koordinator(props.tor.id, payload)
                                                 : canKeu
                                                 ? tor_request.validasi_keuangan(props.tor.id, payload)
@@ -1543,23 +1623,102 @@ const Rab=(props)=>{
 
                                 return (
                                     <>
-                                        <Button
-                                            type="button"
-                                            className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
-                                            onClick={() => handleApprovalAction(false)}
-                                        >
-                                            <X className="size-4" />
-                                            <span>Kembalikan / Perlu Revisi</span>
-                                        </Button>
+                                        {canExecutePP && (
+                                            <>
+                                                {props.tor?.status_pengadaan !== "proses_pengadaan" && props.tor?.status_pengadaan !== "selesai" && (
+                                                    <Button
+                                                        type="button"
+                                                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                                                        onClick={() => {
+                                                            MySwal.fire({
+                                                                title: "Mulai Proses Pengadaan?",
+                                                                text: "Status usulan akan diubah menjadi 'Proses Pengadaan'. Pejabat Pengadaan dapat mulai memesan barang ke rekanan / e-katalog.",
+                                                                icon: "question",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Ya, Mulai Pengadaan!",
+                                                                cancelButtonText: "Batal",
+                                                                confirmButtonColor: "#d97706"
+                                                            }).then((res: any) => {
+                                                                if (res.isConfirmed) {
+                                                                    tor_request.proses_pengadaan(props.tor.id).then(() => {
+                                                                        toast.success("Proses pengadaan resmi dimulai!", { position: "bottom-center" })
+                                                                        window.location.reload()
+                                                                    }).catch(() => {
+                                                                        toast.error("Gagal memulai proses pengadaan", { position: "bottom-center" })
+                                                                    })
+                                                                }
+                                                            })
+                                                        }}
+                                                    >
+                                                        <span>Mulai Pemesanan (Tahap 5)</span>
+                                                    </Button>
+                                                )}
 
-                                        <Button
-                                            type="button"
-                                            className="bg-blue-900 hover:bg-blue-800 text-white font-extrabold text-xs h-10 px-5 rounded-xl shadow-md inline-flex items-center gap-2 transition-all hover:shadow-lg cursor-pointer"
-                                            onClick={() => handleApprovalAction(true)}
-                                        >
-                                            <CheckCircle2 className="size-4 text-amber-400" />
-                                            <span>Setujui & Validasi</span>
-                                        </Button>
+                                                {props.tor?.status_pengadaan !== "selesai" && (
+                                                    <Button
+                                                        type="button"
+                                                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                                                        onClick={() => {
+                                                            MySwal.fire({
+                                                                title: "Upload Dokumen BAST & Transaksi",
+                                                                html: `
+                                                                    <div class="text-left text-xs space-y-2 mt-2">
+                                                                        <p class="text-slate-600 font-medium">
+                                                                            Masukkan link berkas atau nama dokumen transaksi resmi (Surat Pesanan/SPK, Faktur, BAST Barang):
+                                                                        </p>
+                                                                    </div>
+                                                                `,
+                                                                input: "text",
+                                                                inputPlaceholder: "Contoh: /uploads/bast/BAST_Inventaris_UNS_2026.pdf atau link Google Drive...",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Simpan & Tutup Kegiatan",
+                                                                cancelButtonText: "Batal",
+                                                                confirmButtonColor: "#047857"
+                                                            }).then((res: any) => {
+                                                                if (res.isConfirmed && res.value) {
+                                                                    tor_request.upload_dokumen_pengadaan(props.tor.id, { file_dokumen_pengadaan: res.value }).then(() => {
+                                                                        toast.success("Dokumen BAST berhasil diunggah! Pengadaan selesai tuntas.", { position: "bottom-center" })
+                                                                        window.location.reload()
+                                                                    }).catch(() => {
+                                                                        toast.error("Gagal menyimpan dokumen pengadaan", { position: "bottom-center" })
+                                                                    })
+                                                                }
+                                                            })
+                                                        }}
+                                                    >
+                                                        <span>Upload BAST Belanja (Tahap 6)</span>
+                                                    </Button>
+                                                )}
+                                            </>
+                                        )}
+
+                                        {(canKoor || canPP || canKeu || canWadek) && (
+                                            <>
+                                                <Button
+                                                    type="button"
+                                                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-10 px-4 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                                                    onClick={() => handleApprovalAction(false)}
+                                                >
+                                                    <X className="size-4" />
+                                                    <span>Kembalikan / Perlu Revisi</span>
+                                                </Button>
+
+                                                <Button
+                                                    type="button"
+                                                    className="bg-blue-900 hover:bg-blue-800 text-white font-extrabold text-xs h-10 px-5 rounded-xl shadow-md inline-flex items-center gap-2 transition-all hover:shadow-lg cursor-pointer"
+                                                    onClick={() => handleApprovalAction(true)}
+                                                >
+                                                    <CheckCircle2 className="size-4 text-amber-400" />
+                                                    <span>
+                                                        {canKoor 
+                                                            ? (isHps ? "Setujui (Lanjut ke PP)" : "Setujui (Lanjut ke Wakil Dekan)")
+                                                            : canPP
+                                                            ? "Validasi HPS (Rekomendasikan ke Wadek II)"
+                                                            : "Setujui & Sahkan"}
+                                                    </span>
+                                                </Button>
+                                            </>
+                                        )}
                                     </>
                                 )
                             })()}

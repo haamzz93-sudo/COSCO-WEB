@@ -405,6 +405,17 @@ export const tor_request={
     validasi_wakil_dekan:async(id, params)=>{
         return await axios.put(`/api/tors/validasi_wakil_dekan/${id}`, params).then(res=>res.data)
     },
+    validasi_pp:async(id, params)=>{
+        return await axios.put(`/api/tors/validasi_pp/${id}`, params).then(res=>res.data)
+    },
+    proses_pengadaan:async(id, params={})=>{
+        return await axios.put(`/api/tors/proses_pengadaan/${id}`, params).then(res=>res.data)
+    },
+    upload_dokumen_pengadaan:async(id, formData)=>{
+        return await axios.post(`/api/tors/upload_dokumen_pengadaan/${id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(res=>res.data)
+    },
     delete:async(id)=>{
         return await axios.delete(`/api/tors/${id}`).then(res=>res.data)
     },

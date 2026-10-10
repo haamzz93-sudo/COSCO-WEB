@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Database\Seeders;
 
@@ -52,6 +52,20 @@ class RoleSeeder extends Seeder
                     "memo_cair_keuangan_validasi"
                 ],
                 'keterangan' => 'Role Verifikasi Awal TOR RAB & Persetujuan Memo Cair (Sub Kor Non Akademik / Perencanaan)'
+            ],
+            [
+                'role' => 'pejabat_pengadaan',
+                'nama_role' => 'Pejabat Pengadaan (PP)',
+                'permissions' => [
+                    "specific_is_user_pp",
+                    "tor_pp_validasi",
+                    "pengadaan_pp_execute",
+                    "pengadaan_pp_upload",
+                    "satuan_add",
+                    "satuan_update",
+                    "kegiatan_detail_update"
+                ],
+                'keterangan' => 'Role Pejabat Pengadaan (PP): Verifikasi HPS BHP & Inventaris, Eksekusi Pengadaan, dan Unggah BAST Dokumen Belanja'
             ],
             [
                 'role' => 'wakil_dekan',
