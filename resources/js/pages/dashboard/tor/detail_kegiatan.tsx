@@ -704,17 +704,20 @@ export const Progress = ({ dataSource: data, data: dataAlt }: any) => {
     }
     const docName = isHps ? `HPS ${isInventaris ? "Inventaris" : "BHP"}` : "TOR RAB"
 
-    const isStep1Done = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep2Done = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep3Done = ["koordinator_applied", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
-    const isStep4Done = ["wakil_dekan_applied"].includes(status)
-    const isStep5Done = status === "wakil_dekan_applied"
+    const statusPengadaan = item?.status_pengadaan || 'draft'
+    const isStep1Done = status !== "draft"
+    const isStep2Done = ["koordinator_applied", "koordinator_revisi", "pp_applied", "pp_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep3Done = ["pp_applied", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep4Done = ["wakil_dekan_applied"].includes(status) || statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep5Done = statusPengadaan === "proses_pengadaan" || statusPengadaan === "selesai" || !!item?.file_dokumen_pengadaan
+    const isStep6Done = !!item?.file_dokumen_pengadaan || statusPengadaan === "selesai"
+    const isStep7Done = statusPengadaan === "selesai"
 
-    const steps = [
+    const stepsHps = [
         {
             number: 1,
-            title: isHps ? `PIC Menyusun Usulan HPS ${isInventaris ? "Inventaris" : "BHP"}` : "PIC Kegiatan membuat TOR & RAB",
-            subtitle: isHps ? "Penyusunan Rincian Barang HPS" : "Pengerjaan TOR/RAB (Draft)",
+            title: `1. PIC Mengajukan Usulan ${isInventaris ? "Inventaris" : "BHP"}`,
+            subtitle: status === "draft" ? "Penyusunan Rincian Barang & Spesifikasi Teknis (HPS)" : "Usulan HPS Telah Diajukan ke Sistem",
             completed: isStep1Done,
             active: status === "draft",
             isRevisi: false,
@@ -722,9 +725,81 @@ export const Progress = ({ dataSource: data, data: dataAlt }: any) => {
         },
         {
             number: 2,
-            title: isHps ? `PIC Ajukan Usulan HPS ${isInventaris ? "Inventaris" : "BHP"}` : "PIC Ajukan TOR RAB",
-            subtitle: isStep2Done ? `${docName} Diajukan ke Sistem` : `Menunggu pengajuan ${docName}`,
+            title: status === "koordinator_revisi" ? "2. Revisi Usulan (Koordinator)" : "2. Review dan Validasi Koordinator",
+            subtitle: status === "sent" ? "Menunggu telaah urgensi oleh Koordinator Kampus" : (isStep2Done ? "Telah disetujui Koordinator Kampus Madiun" : "Tahap telaah Koordinator"),
             completed: isStep2Done,
+            active: status === "sent",
+            isRevisi: status === "koordinator_revisi",
+            note: item?.catatan_koordinator || null
+        },
+        {
+            number: 3,
+            title: status === "pp_revisi" ? "3. Revisi HPS (Pejabat Pengadaan)" : "3. Review dan Validasi PP",
+            subtitle: status === "koordinator_applied" ? "Pejabat Pengadaan menelaah kewajaran HPS & E-Katalog" : (isStep3Done ? "HPS telah divalidasi Pejabat Pengadaan" : "Menunggu telaah Koordinator"),
+            completed: isStep3Done,
+            active: status === "koordinator_applied",
+            isRevisi: status === "pp_revisi",
+            note: item?.catatan_pp || null
+        },
+        {
+            number: 4,
+            title: status === "wakil_dekan_revisi" ? "4. Revisi (Wakil Dekan II)" : "4. Review dan Validasi Wakil Dekan II",
+            subtitle: status === "pp_applied" ? "Menunggu otorisasi final pengadaan oleh Wakil Dekan II" : (isStep4Done ? "Pengadaan telah diotorisasi Wakil Dekan II" : "Menunggu telaah Pejabat Pengadaan"),
+            completed: isStep4Done,
+            active: status === "pp_applied",
+            isRevisi: status === "wakil_dekan_revisi",
+            note: item?.catatan_wakil_dekan || null
+        },
+        {
+            number: 5,
+            title: "5. Proses Pengadaan",
+            subtitle: statusPengadaan === "proses_pengadaan" ? "Sedang dalam proses pemesanan rekanan / E-Katalog" : (isStep5Done ? "Pesanan telah diproses rekanan resmi" : (isStep4Done ? "Siap dieksekusi pemesanan oleh Pejabat Pengadaan" : "Menunggu otorisasi pimpinan")),
+            completed: isStep5Done,
+            active: isStep4Done && statusPengadaan !== "selesai" && !isStep6Done,
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 6,
+            title: "6. Upload Dokumen Transaksi Belanja PP",
+            subtitle: isStep6Done ? "Dokumen transaksi resmi (SPK, Faktur, BAST) telah diunggah" : (isStep5Done ? "Pejabat Pengadaan mengunggah SPK, Faktur, dan BAST" : "Tahap pasca kedatangan barang"),
+            completed: isStep6Done,
+            active: isStep5Done && !isStep6Done,
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 7,
+            title: "7. Selesai",
+            subtitle: isStep7Done ? "Pengadaan tuntas 100%, serah terima barang selesai" : "Menunggu kelengkapan dokumen transaksi belanja",
+            completed: isStep7Done,
+            active: isStep7Done,
+            isRevisi: false,
+            note: null
+        }
+    ];
+
+    const isStep1RegDone = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
+    const isStep2RegDone = ["sent", "koordinator_applied", "koordinator_revisi", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
+    const isStep3RegDone = ["koordinator_applied", "keuangan_applied", "keuangan_revisi", "wakil_dekan_applied", "wakil_dekan_revisi"].includes(status)
+    const isStep4RegDone = ["wakil_dekan_applied"].includes(status)
+    const isStep5RegDone = status === "wakil_dekan_applied"
+
+    const stepsRegular = [
+        {
+            number: 1,
+            title: "PIC Kegiatan membuat TOR & RAB",
+            subtitle: "Pengerjaan TOR/RAB (Draft)",
+            completed: isStep1RegDone,
+            active: status === "draft",
+            isRevisi: false,
+            note: null
+        },
+        {
+            number: 2,
+            title: "PIC Ajukan TOR RAB",
+            subtitle: isStep2RegDone ? "TOR RAB Diajukan ke Sistem" : "Menunggu pengajuan TOR RAB",
+            completed: isStep2RegDone,
             active: false,
             isRevisi: false,
             note: null
@@ -732,8 +807,8 @@ export const Progress = ({ dataSource: data, data: dataAlt }: any) => {
         {
             number: 3,
             title: status === "koordinator_revisi" ? "Revisi (Koordinator)" : "Review dan Validasi Koordinator",
-            subtitle: status === "sent" ? "Menunggu telaah koordinator" : isStep3Done ? "Telah disetujui Koordinator" : "Tahap persetujuan koordinator",
-            completed: isStep3Done,
+            subtitle: status === "sent" ? "Menunggu telaah koordinator" : isStep3RegDone ? "Telah disetujui Koordinator" : "Tahap persetujuan koordinator",
+            completed: isStep3RegDone,
             active: status === "sent",
             isRevisi: status === "koordinator_revisi",
             note: item?.catatan_koordinator || null
@@ -741,8 +816,8 @@ export const Progress = ({ dataSource: data, data: dataAlt }: any) => {
         {
             number: 4,
             title: status === "wakil_dekan_revisi" ? "Revisi (Wakil Dekan)" : "Review dan Validasi Wakil Dekan",
-            subtitle: (status === "koordinator_applied" || status === "keuangan_applied") ? "Menunggu persetujuan pimpinan" : isStep4Done ? "Disetujui Wakil Dekan" : "Tahap persetujuan pimpinan",
-            completed: isStep4Done,
+            subtitle: (status === "koordinator_applied" || status === "keuangan_applied") ? "Menunggu persetujuan pimpinan" : isStep4RegDone ? "Disetujui Wakil Dekan" : "Tahap persetujuan pimpinan",
+            completed: isStep4RegDone,
             active: status === "koordinator_applied" || status === "keuangan_applied",
             isRevisi: status === "wakil_dekan_revisi",
             note: item?.catatan_wakil_dekan || null
@@ -750,129 +825,138 @@ export const Progress = ({ dataSource: data, data: dataAlt }: any) => {
         {
             number: 5,
             title: "Selesai",
-            subtitle: isStep5Done ? `${docName} disetujui & siap diajukan Memo Cair` : "Menunggu seluruh alur persetujuan",
-            completed: isStep5Done,
-            active: isStep5Done,
+            subtitle: isStep5RegDone ? "TOR RAB disetujui & siap diajukan Memo Cair" : "Menunggu seluruh alur persetujuan",
+            completed: isStep5RegDone,
+            active: isStep5RegDone,
             isRevisi: false,
             note: null
         }
-    ]
+    ];
+
+    const steps = isHps ? stepsHps : stepsRegular;
 
     return (
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
             {/* CARD HEADER */}
             <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                    <div className="size-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shadow-xs shrink-0 font-bold">
-                        <Clock className="size-4" />
+                    <div className="size-8 rounded-xl bg-blue-900 text-white flex items-center justify-center shadow-xs shrink-0">
+                        <FolderKanban className="size-4" />
                     </div>
                     <div>
                         <h3 className="text-xs font-extrabold text-slate-900 dark:text-white font-heading uppercase tracking-wide">
-                            PROGRESS
+                            Detail Kegiatan
                         </h3>
                         <p className="text-[10.5px] text-slate-400 font-medium">
-                            Alur persetujuan berjenjang
+                            Identitas usulan & penanggung jawab
                         </p>
                     </div>
                 </div>
-                {status === "wakil_dekan_applied" && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        SELESAI
-                    </span>
-                )}
             </div>
 
-            {/* CARD BODY: SEAMLESS TIMELINE */}
-            <div className="p-5">
-                <div className="relative pl-1">
-                    {steps.map((step, idx) => {
-                        const isLast = idx === steps.length - 1
-                        const isLineFilled = step.completed
-
-                        return (
-                            <div key={step.number} className="relative flex items-start gap-3.5 pb-6 last:pb-1">
-                                
-                                {/* SEAMLESS CONTINUOUS VERTICAL LINE */}
-                                {!isLast && (
-                                    <div 
-                                        className={`absolute left-4 top-8 bottom-0 -ml-[1px] w-0.5 transition-colors ${
-                                            isLineFilled 
-                                                ? "bg-blue-900 dark:bg-blue-600" 
-                                                : "bg-slate-200 dark:bg-slate-700"
-                                        }`}
-                                    />
-                                )}
-
-                                {/* CIRCLE NODE */}
-                                <div 
-                                    className={`size-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 z-10 transition-all ${
-                                        step.completed
-                                            ? "bg-blue-900 text-white shadow-xs ring-4 ring-blue-100 dark:ring-blue-950"
-                                            : step.isRevisi
-                                            ? "bg-red-600 text-white shadow-xs ring-4 ring-red-100 dark:ring-red-950"
-                                            : step.active
-                                            ? "bg-amber-400 text-slate-950 font-black shadow-xs ring-4 ring-amber-100 dark:ring-amber-950 animate-pulse"
-                                            : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700"
-                                    }`}
-                                >
-                                    {step.completed ? (
-                                        <Check className="size-4 stroke-[3]" />
-                                    ) : (
-                                        step.number
-                                    )}
-                                </div>
-
-                                {/* TEXT CONTENT & REVIEWER SPEECH BUBBLE */}
-                                <div className="min-w-0 flex-1 pt-0.5">
-                                    <div className="flex items-center gap-2">
-                                        <h4 className={`text-xs font-bold leading-tight ${
-                                            step.completed
-                                                ? "text-blue-950 dark:text-blue-300"
-                                                : step.isRevisi
-                                                ? "text-red-700 dark:text-red-400"
-                                                : step.active
-                                                ? "text-amber-800 dark:text-amber-300 font-extrabold"
-                                                : "text-slate-500 dark:text-slate-400"
-                                        }`}>
-                                            {step.title}
-                                        </h4>
-                                        {step.active && !step.completed && !step.isRevisi && (
-                                            <span className="px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 rounded-md">
-                                                Aktif
-                                            </span>
-                                        )}
-                                    </div>
-                                    
-                                    {step.subtitle && (
-                                        <p className={`text-[11px] mt-0.5 leading-snug ${
-                                            step.isRevisi 
-                                                ? "text-red-600 dark:text-red-300 font-semibold"
-                                                : step.active 
-                                                ? "text-slate-700 dark:text-slate-300 font-medium" 
-                                                : "text-slate-400 dark:text-slate-500"
-                                        }`}>
-                                            {step.subtitle}
-                                        </p>
-                                    )}
-
-                                    {/* REVIEWER NOTE SPEECH BUBBLE */}
-                                    {step.note && (
-                                        <div className="mt-2 p-2.5 rounded-xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300">
-                                            <span className="text-[9.5px] font-extrabold uppercase text-blue-900 dark:text-blue-300 block mb-0.5">
-                                                Catatan Reviewer:
-                                            </span>
-                                            <span className="italic font-medium">
-                                                "{step.note}"
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
+            {/* CARD BODY */}
+            <div className="p-5 space-y-4 text-xs">
+                {/* 1. KEGIATAN INDUK */}
+                <div className="space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                        Kegiatan Induk
+                    </span>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                        {kegInduk?.nama_kegiatan || "-"}
+                    </p>
                 </div>
+
+                {/* 2. DETAIL KEGIATAN */}
+                <div className="space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                        Detail Kegiatan
+                    </span>
+                    <p className="text-xs font-bold text-blue-950 dark:text-blue-200 leading-snug">
+                        {kegDetail?.nama_kegiatan_detail || "-"}
+                    </p>
+                </div>
+
+                {/* 3. ALOKASI BIAYA HIGHLIGHT CARD */}
+                <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50/60 dark:from-emerald-950/40 dark:to-teal-950/20 border border-emerald-200/80 dark:border-emerald-800/60 space-y-1">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                            Alokasi Biaya
+                        </span>
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
+                            Plafon
+                        </span>
+                    </div>
+                    <p className="text-base font-black text-emerald-700 dark:text-emerald-300 font-mono leading-none pt-0.5">
+                        <NumericFormat 
+                            displayType="text"
+                            value={biayaVal}
+                            decimalScale={0}
+                            thousandSeparator=","
+                            prefix="Rp "
+                        />
+                    </p>
+                </div>
+
+                {/* 4. PIC PENANGGUNG JAWAB */}
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700 flex items-start gap-2.5">
+                    <div className="size-7 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-300 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                        <UserCheck className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                            PIC Kegiatan
+                        </span>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug mt-0.5">
+                            {picUser?.name || "-"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-800 my-2" />
+
+                {/* 5. IKU, IK, P PILLS */}
+                <div className="space-y-3">
+                    {/* IKU */}
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-blue-900 dark:text-blue-400">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                                Indikator Kinerja Utama (IKU)
+                            </span>
+                        </div>
+                        <p className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+                            {ikuData?.kode_iku ? `${ikuData.kode_iku} - ${ikuData.deskripsi_iku}` : "-"}
+                        </p>
+                    </div>
+
+                    {/* IK */}
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-400">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                                Indikator Kinerja Kegiatan (IK)
+                            </span>
+                        </div>
+                        <p className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+                            {ikData?.kode_ik ? `${ikData.kode_ik} - ${ikData.deskripsi_ik}` : "-"}
+                        </p>
+                    </div>
+
+                    {/* P */}
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-400">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                                Program (P)
+                            </span>
+                        </div>
+                        <p className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
+                            {pData?.kode_p ? `${pData.kode_p} - ${pData.deskripsi_p}` : "-"}
+                        </p>
+                    </div>
+                </div>
+
             </div>
         </div>
     )
 }
+
+// ==========================================
 export const ProgressTimeline = Progress;
