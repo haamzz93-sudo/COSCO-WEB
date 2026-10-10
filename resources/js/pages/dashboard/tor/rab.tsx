@@ -87,7 +87,6 @@ export default function Page() {
     const [rab, setRab]=useState([])
     
     const [showRightPanel, setShowRightPanel]=useState(true)
-    const [modalUploadBAST, setModalUploadBAST] = useState(false)
     const [modal_tambah_kategori, setModalTambahKategori]=useState({
         open:false,
         data:{
@@ -495,16 +494,7 @@ export default function Page() {
                     </div>
                 </SidebarInset>
             
-            {/* MODAL UPLOAD DOKUMEN PENGADAAN (TAHAP 6) */}
-            <ModalUploadDokumenPengadaan
-                open={modalUploadBAST}
-                onClose={() => setModalUploadBAST(false)}
-                tor={detail}
-                onSuccess={() => {
-                    setModalUploadBAST(false)
-                    window.location.reload()
-                }}
-            />
+
         </SidebarProvider>
 
             {/* MODAL DIALOG TAMBAH */}
@@ -786,10 +776,11 @@ const Progress = ({ dataSource: data, data: dataAlt }: any) => {
     )
 }
 
-const Rab=(props)=>{
+function Rab(props: any) {
     const auth: any=usePage().props.auth
     
     const [generating, setGenerating]=useState(false)
+    const [modalUploadBAST, setModalUploadBAST] = useState(false)
 
     const data=props.dataSource
 
@@ -1726,6 +1717,17 @@ const Rab=(props)=>{
                             </div>
                         )
                     })()}
+                    {modalUploadBAST && (
+                        <ModalUploadDokumenPengadaan
+                            open={modalUploadBAST}
+                            onClose={() => setModalUploadBAST(false)}
+                            tor={props.tor}
+                            onSuccess={() => {
+                                setModalUploadBAST(false)
+                                window.location.reload()
+                            }}
+                        />
+                    )}
                 </>
             )}
         </Formik>
