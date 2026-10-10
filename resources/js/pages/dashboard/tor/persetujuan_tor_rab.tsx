@@ -161,9 +161,12 @@ export default function PersetujuanTorRab() {
     )
 }
 
-const TableApproval = (props: any) => {
+function TableApproval(props: any) {
     const auth: any = usePage().props.auth
     const queryClient = useQueryClient()
+    const userRole = auth.user?.role
+    const permissions = auth.user?.permissions || []
+    const isAdmin = userRole === "admin" || userRole === "superadmin" || auth.user?.is_admin
 
     // Modals state for review & validasi
     const [modalKoor, setModalKoor] = useState({ open: false, data: {} as any, tor: {} as any })
@@ -204,10 +207,8 @@ const TableApproval = (props: any) => {
         )
     }
 
-    const availableStatus = options_status.filter(f => !f.permission || auth.user?.permissions?.includes(f.permission))
+    const availableStatus = options_status.filter(f => !f.permission || permissions.includes(f.permission))
     const statusOptions = isAdmin ? options_status : (availableStatus.length > 0 ? availableStatus : options_status)
-
-    const isAdmin = auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin
 
     return (
         <>
@@ -393,7 +394,7 @@ const TableApproval = (props: any) => {
 // ==========================================
 // MODAL REVIEW KOORDINATOR
 // ==========================================
-const ModalReviewKoordinator = (props: any) => {
+function ModalReviewKoordinator(props: any) {
     const edit_data = useMutation({
         mutationFn: (params: any) => tor_request.validasi_koordinator(params.id, params),
         onSuccess: () => {
@@ -506,7 +507,7 @@ const ModalReviewKoordinator = (props: any) => {
 // ==========================================
 // MODAL REVIEW KEUANGAN
 // ==========================================
-const ModalReviewKeuangan = (props: any) => {
+function ModalReviewKeuangan(props: any) {
     const [wakil_dekan, setWakilDekan] = useState([])
 
     const mt_get_wakil_dekan = useMutation({
@@ -656,7 +657,7 @@ const ModalReviewKeuangan = (props: any) => {
 // ==========================================
 // MODAL REVIEW WAKIL DEKAN
 // ==========================================
-const ModalReviewWakilDekan = (props: any) => {
+function ModalReviewWakilDekan(props: any) {
     const edit_data = useMutation({
         mutationFn: (params: any) => tor_request.validasi_wakil_dekan(params.id, params),
         onSuccess: () => {
