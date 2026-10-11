@@ -22,7 +22,7 @@ use App\Services\WablasService;
 class MemoCairController extends Controller
 {
 
-        public function add(Request $request)
+    public function add(Request $request)
     {
         $login_data = $request->user();
         $req = $request->all();
@@ -373,9 +373,19 @@ class MemoCairController extends Controller
         $wablas = new WablasService();
         if($req['status_ajuan']=="keuangan_applied"){
             $result = $wablas->send_approve_memo_cair_keuangan($request, $id);
+
+            // Panggil notif Bendahara HANYA jika ini skema PK
+            if (($id_data['tipe_pencairan'] ?? 'normal') === 'pk') {
+                $wablas->send_bayar_memo_cair_bendahara($request, $id);
+            }
         }
         elseif($req['status_ajuan']=="keuangan_rejected"){
             $result = $wablas->send_reject_memo_cair_keuangan($request, $id);
+        }
+        
+        if(($req['status_ajuan'] ?? '') === "terbayar"){
+            // Notifikasi dana cair ke PIC (untuk PK maupun Normal)
+            $wablas->send_notify_dana_cair_pic($request, $id);
         }
 
         return response()->json([
@@ -454,6 +464,10 @@ class MemoCairController extends Controller
             MemoCairModel::find($id)->update($data_update);
         });
 
+        //jobs
+        $wablas = new WablasService();
+        $result = $wablas->send_submit_spj_verifikator($request, $id);
+
         return response()->json([
             'status'=>"ok"
         ]);
@@ -524,6 +538,19 @@ class MemoCairController extends Controller
 
             MemoCairModel::find($id)->update($data_update);
         });
+
+        $wablas = new WablasService();
+        if($req['status_spj'] == "keuangan_applied"){
+            $wablas->send_approve_spj_valid($request, $id);
+
+            // Panggil notif Bendahara HANYA jika ini skema NORMAL
+            if (($id_data['tipe_pencairan'] ?? 'normal') === 'normal') {
+                $wablas->send_bayar_memo_cair_bendahara($request, $id);
+            }
+        } 
+        elseif($req['status_spj'] == "keuangan_revisi"){
+            $wablas->send_revisi_spj_verifikator($request, $id);
+        }
 
         return response()->json([
             'status'=>"ok"

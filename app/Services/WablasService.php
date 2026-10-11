@@ -342,53 +342,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 4. Submit TOR – notifikasi ke Perencanaan
-    // -------------------------------------------------------------------------
-    public function send_submit_tor_to_keuangan($request, $tor_id)
-    {
-        $login_data = $request->user();
-        $req = $request->all();
-
-        // TOR PIC
-        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
-        if(is_null($tor['kegiatan_detail']['pic_kegiatan'])){
-            return response()->json([
-                'error'   => "NOT_FOUND",
-                'message' => "PIC Kegiatan tidak ditemukan."
-            ], 404);
-        }
-
-        // KEUANGAN/PERENCANAAN
-        $keuangan=User::get();
-        $keuangan=$keuangan->filter(fn($user)=>$user->hasPermission("specific_is_user_keuangan"));
-
-        // SUCCESS
-        $pengaturan=PengaturanRepo::gets();
-
-        $template = $pengaturan['submit_tor_keuangan'];
-        $messages=[];
-        $now=Carbon::now()->startOfDay();
-        foreach($keuangan as $val){
-            $replacements=[
-                '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-                '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-                '{KEUANGAN}'     => $val['name']
-            ];
-
-            if(!empty($val['no_wa'])){
-                $messages[]=[
-                    'phone'     =>$val['no_wa'],
-                    'message'   =>self::prepareMessage($replacements, $template)
-                ];
-            }
-        }
-        
-        SendWablasJob::dispatch($messages);
-        // $result = self::sendMultipleMessages($messages);
-    }
-
-    // -------------------------------------------------------------------------
-    // 8. Submit TOR ke Wakil Dekan (notif ke WD)
+    // 4. Submit TOR ke Wakil Dekan (notif ke WD)
     // -------------------------------------------------------------------------
     public function send_submit_tor_to_wd($request, $tor_id)
     {
@@ -474,7 +428,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 7. TOR direvisi oleh koordinator (notif ke PIC)
+    // 6. TOR direvisi oleh koordinator (notif ke PIC)
     // -------------------------------------------------------------------------
     public function send_revisi_tor_koordinator($request, $tor_id)
     {
@@ -507,73 +461,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 6. TOR disetujui oleh Perencanaan (notif ke PIC)
-    // -------------------------------------------------------------------------
-    public function send_approve_tor_keuangan($request, $tor_id)
-    {
-        $login_data = $request->user();
-        $req = $request->all();
-
-        // TOR PIC
-        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
-        if(is_null($tor['kegiatan_detail']['pic_kegiatan'])){
-            return response()->json([
-                'error'   => "NOT_FOUND",
-                'message' => "PIC Kegiatan tidak ditemukan."
-            ], 404);
-        }
-
-        // SUCCESS
-        $pengaturan=PengaturanRepo::gets();
-
-        $template = $pengaturan['approve_tor_keuangan'];
-        $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{KEUANGAN}'     => $login_data['name']
-        ];
-
-        $message = self::prepareMessage($replacements, $template);
-        
-        SendWablasJob::dispatch([['phone'=>$tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], 'message'=>$message]]);
-        // $result = self::sendMessage($tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], $message);
-    }
-
-    // -------------------------------------------------------------------------
-    // 7. TOR direvisi oleh Perencanaan (notif ke PIC)
-    // -------------------------------------------------------------------------
-    public function send_revisi_tor_keuangan($request, $tor_id)
-    {
-        $login_data = $request->user();
-        $req = $request->all();
-
-        // TOR PIC
-        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
-        if(is_null($tor['kegiatan_detail']['pic_kegiatan'])){
-            return response()->json([
-                'error'   => "NOT_FOUND",
-                'message' => "PIC Kegiatan tidak ditemukan."
-            ], 404);
-        }
-
-        // SUCCESS
-        $pengaturan=PengaturanRepo::gets();
-
-        $template = $pengaturan['revisi_tor_keuangan'];
-        $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{KEUANGAN}'     => $login_data['name']
-        ];
-
-        $message = self::prepareMessage($replacements, $template);
-        
-        SendWablasJob::dispatch([['phone'=>$tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], 'message'=>$message]]);
-        // $result = self::sendMessage($tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], $message);
-    }
-
-    // -------------------------------------------------------------------------
-    // 9. TOR disetujui oleh Wakil Dekan (notif ke PIC)
+    // 7. TOR disetujui oleh Wakil Dekan (notif ke PIC)
     // -------------------------------------------------------------------------
     public function send_approve_tor_wd($request, $tor_id)
     {
@@ -606,7 +494,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 7. TOR direvisi oleh wakil dekan (notif ke PIC)
+    // 8. TOR direvisi oleh wakil dekan (notif ke PIC)
     // -------------------------------------------------------------------------
     public function send_revisi_tor_wd($request, $tor_id)
     {
@@ -639,7 +527,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 11. Reminder Memo Cair (kelipatan 3 hari)
+    // 9. Reminder Memo Cair (kelipatan 3 hari)
     // -------------------------------------------------------------------------
     public function send_remind_pic_memo_cair()
     {
@@ -688,7 +576,8 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 12. Submit Memo Cair (notif ke Sub Kor Non Akademik)
+    // 10. Submit Memo Cair (notif ke Sub Kor Non Akademik)
+    // permissions : specific_is_user_subkor, memo_cair_keuangan_validasi
     // -------------------------------------------------------------------------
     public function send_submit_memo_cair($request, $memo_cair_id)
     {
@@ -707,7 +596,10 @@ class WablasService
 
         // KEUANGAN/PERENCANAAN
         $keuangan=User::get();
-        $keuangan=$keuangan->filter(fn($user)=>$user->hasPermission("specific_is_user_keuangan"));
+        $keuangan = $keuangan->filter(fn($user) => 
+            $user->hasPermission("specific_is_user_subkor") && 
+            $user->hasPermission("memo_cair_keuangan_validasi")
+        );
 
         // SUCCESS
         $pengaturan=PengaturanRepo::gets();
@@ -735,7 +627,7 @@ class WablasService
     }
 
     // -------------------------------------------------------------------------
-    // 13. Memo Cair disetujui oleh Sub Kor (notif ke PIC)
+    // 11. Memo Cair disetujui oleh Sub Kor (notif ke PIC)
     // -------------------------------------------------------------------------
     public function send_approve_memo_cair_keuangan($request, $memo_cair_id)
     {
@@ -763,11 +655,18 @@ class WablasService
         ];
 
         $message = self::prepareMessage($replacements, $template);
-        $result = self::sendMessage($tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], $message);
+        $messages = [
+            [
+                'phone' => $tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], 
+                'message'   => $message
+            ]
+        ];
+
+        SendWablasJob::dispatch($messages);
     }
 
     // -------------------------------------------------------------------------
-    // 13. Memo Cair ditolak oleh Sub Kor (notif ke PIC)
+    // 12. Memo Cair ditolak oleh Sub Kor (notif ke PIC)
     // -------------------------------------------------------------------------
     public function send_reject_memo_cair_keuangan($request, $memo_cair_id)
     {
@@ -795,118 +694,634 @@ class WablasService
         ];
 
         $message = self::prepareMessage($replacements, $template);
-        $result = self::sendMessage($tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], $message);
+        $messages = [
+            [
+                'phone' => $tor['kegiatan_detail']['user_pic_kegiatan']['no_wa'], 
+                'message'   => $message
+            ]
+        ];
+
+        SendWablasJob::dispatch($messages);
     }
 
     // -------------------------------------------------------------------------
     // 16. Pengingat TOR ke Koordinator Madiun (Remind Koordinator)
+    // status_ajuan=sent, permissions=specific_is_user_koordinator, tor_koordinator_validasi
     // -------------------------------------------------------------------------
-    public function send_remind_koordinator_tor($request, $tor_id)
+    public function send_remind_koordinator_tor()
     {
-        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
-        if (!$tor || !$tor['kegiatan_detail']) {
-            return false;
-        }
+        // TOR SENT
+        $tors = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->where("status_ajuan", "sent")->get();
 
-        $koor = User::get()->filter(fn($user)=>$user->hasPermission("specific_is_user_koordinator"));
+        $text_kegiatan=$tors->isEmpty()?"":$tors->pluck('kegiatan_detail.nama_kegiatan_detail')->filter()->implode(', ');
+
+        //PERMISSION
+        $koor = User::get()->filter(fn($user)=>
+            $user->hasPermission("specific_is_user_koordinator") &&
+            $user->hasPermission("tor_koordinator_validasi")
+        );
         $pengaturan = PengaturanRepo::gets();
-        $template = $pengaturan['remind_koordinator_tor'] ?? "Cosco Super APPS\nKpd Yth. *{KOORDINATOR}*\n\nMohon izin mengingatkan, terdapat pengajuan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* yang saat ini sedang menunggu review dan persetujuan dari Bapak/Ibu Koordinator.\n\nTautan verifikasi:\n{link_sistem}\n\nTerima kasih atas perhatian dan arahan Bapak/Ibu.";
 
-        $messages = [];
-        foreach ($koor as $val) {
+        // SUCCESS
+        $template = $pengaturan['remind_koordinator_tor'] ?? "Cosco Super APPS\nKpd Yth. *{KOORDINATOR}*\n\nMohon izin mengingatkan, terdapat pengajuan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* yang saat ini sedang menunggu review dan persetujuan dari Bapak/Ibu Koordinator.\n\nTautan verifikasi:\n{AKSES_CEPAT_COSCO}\n\nTerima kasih atas perhatian dan arahan Bapak/Ibu.";
+        $messages=[];
+        $now=Carbon::now()->startOfDay();
+        foreach($koor as $val){
             $replacements = [
-                '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
-                '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+                '{DETAIL_KEGIATAN}' => $text_kegiatan,
                 '{KOORDINATOR}'     => $val['name']
             ];
-            if (!empty($val['no_wa'])) {
-                $messages[] = [
-                    'phone'   => $val['no_wa'],
-                    'message' => self::prepareMessage($replacements, $template)
+
+            if($text_kegiatan!=""){
+                $messages[]=[
+                    'phone'     =>$val['no_wa'],
+                    'message'   =>self::prepareMessage($replacements, $template)
                 ];
             }
         }
-        if (!empty($messages)) {
-            SendWablasJob::dispatch($messages);
-        }
-        return true;
+        SendWablasJob::dispatch($messages);
+        // $result = self::sendMultipleMessages($messages);
     }
 
     // -------------------------------------------------------------------------
     // 17. Pengingat TOR ke Wakil Dekan SV UNS (Remind Wakil Dekan)
+    // status_ajuan=koordinator_applied, permissions=specific_is_user_wakil_dekan, tor_wakil_dekan_validasi
     // -------------------------------------------------------------------------
-    public function send_remind_wd_tor($request, $tor_id)
+    public function send_remind_wd_tor()
     {
-        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($tor_id);
-        if (!$tor || !$tor['kegiatan_detail']) {
-            return false;
-        }
+        // TOR KOORDINATOR_APPLIED
+        $tors = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->where("status_ajuan", "koordinator_applied")->get();
 
-        $wd = null;
-        if (!empty($tor['wakil_dekan_id'])) {
-            $wd = User::find($tor['wakil_dekan_id']);
-        }
-        if (!$wd) {
-            $wd = User::whereHas('data_role', function($q){
-                $q->whereJsonContains('permissions', 'specific_is_user_wakil_dekan')
-                  ->orWhereJsonContains('permissions', 'specific_wakil_dekan')
-                  ->orWhereJsonContains('permissions', 'tor_wakil_dekan_validasi');
-            })->first();
-        }
-        if (!$wd) {
-            $wd = User::whereIn('role', ['wakil_dekan', 'pimpinan', 'admin'])->first();
-        }
+        $text_kegiatan=$tors->isEmpty()?"":$tors->pluck('kegiatan_detail.nama_kegiatan_detail')->filter()->implode(', ');
 
+        //PERMISSION
+        $wd = User::get()->filter(fn($user)=>
+            $user->hasPermission("specific_is_user_wakil_dekan") &&
+            $user->hasPermission("tor_wakil_dekan_validasi")
+        );
         $pengaturan = PengaturanRepo::gets();
-        $template = $pengaturan['remind_wd_tor'] ?? "Cosco Super APPS\nKpd Yth. *{WAKIL_DEKAN}*\n\nMohon izin melaporkan, usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun dan saat ini menunggu pengesahan akhir dari Bapak/Ibu Wakil Dekan.\n\nTautan persetujuan:\n{link_sistem}\n\nTerima kasih atas perkenan dan arahan Bapak/Ibu.";
 
-        $messages = [];
-        if ($wd && !empty($wd->no_wa)) {
+        // SUCCESS
+        $template = $pengaturan['remind_wd_tor'] ?? "Cosco Super APPS\nKpd Yth. *{WAKIL_DEKAN}*\n\nMohon izin melaporkan, usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun dan saat ini menunggu pengesahan akhir dari Bapak/Ibu Wakil Dekan.\n\nTautan persetujuan:\n{AKSES_CEPAT_COSCO}\n\nTerima kasih atas perkenan dan arahan Bapak/Ibu.";
+        $messages=[];
+        $now=Carbon::now()->startOfDay();
+        foreach($wd as $val){
             $replacements = [
-                '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
-                '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
-                '{WAKIL_DEKAN}'     => $wd->name
+                '{DETAIL_KEGIATAN}' => $text_kegiatan,
+                '{WAKIL_DEKAN}'     => $val['name']
             ];
-            $messages[] = [
-                'phone'   => $wd->no_wa,
-                'message' => self::prepareMessage($replacements, $template)
-            ];
-            SendWablasJob::dispatch($messages);
+
+            if($text_kegiatan!=""){
+                $messages[]=[
+                    'phone'     =>$val['no_wa'],
+                    'message'   =>self::prepareMessage($replacements, $template)
+                ];
+            }
         }
-        return true;
+
+        SendWablasJob::dispatch($messages);
+        // $result = self::sendMultipleMessages($messages);
     }
 
     // -------------------------------------------------------------------------
     // 18. Pengingat Memo Cair ke Sub Kor Non Akademik (Remind Keuangan)
+    // status_ajuan=sent, permissions=specific_is_user_subkor, memo_cair_keuangan_validasi
     // -------------------------------------------------------------------------
-    public function send_remind_keuangan_memo_cair($request, $memo_cair_id)
+    public function send_remind_keuangan_memo_cair()
     {
-        $memo = MemoCairModel::with(["tor", "tor.kegiatan_detail", "tor.kegiatan_detail.user_pic_kegiatan"])->find($memo_cair_id);
-        if (!$memo) {
-            return false;
-        }
+        $memos = MemoCairModel::with(["tor", "tor.kegiatan_detail", "tor.kegiatan_detail.user_pic_kegiatan"])->where("status_ajuan", "sent")->get();
 
-        $keuangan = User::get()->filter(fn($user)=>$user->hasPermission("specific_is_user_keuangan"));
+        // Menggunakan ternary operator untuk kondisi kosong
+        $text_kegiatan = $memos->isEmpty()
+            ? ''
+            : $memos->pluck('tor.kegiatan_detail.nama_kegiatan_detail')->filter()->implode(', ');
+
+        $keuangan = User::get()->filter(fn($user)=>
+            $user->hasPermission("specific_is_user_subkor") && 
+            $user->hasPermission("memo_cair_keuangan_validasi")
+        );
         $pengaturan = PengaturanRepo::gets();
-        $template = $pengaturan['remind_keuangan_memo_cair'] ?? "Cosco Super APPS\nKpd Yth. *{KEUANGAN}*\n\nMohon izin mengingatkan, pengajuan Memo Cair untuk kegiatan *{DETAIL_KEGIATAN}* oleh *{PIC_KEGIATAN}* saat ini sedang menunggu proses validasi dari Tim Keuangan / Sub Kor Non-Akademik.\n\nTautan periksa:\n{link_sistem}\n\nTerima kasih atas kerja samanya.";
+        $template = $pengaturan['remind_keuangan_memo_cair'] ?? "Cosco Super APPS\nKpd Yth. *{KEUANGAN}*\n\nMohon izin mengingatkan, pengajuan Memo Cair untuk kegiatan *{DETAIL_KEGIATAN}* saat ini sedang menunggu proses validasi dari Tim Keuangan / Sub Kor Non-Akademik.\n\nTautan periksa:\n{AKSES_CEPAT_COSCO}\n\nTerima kasih atas kerja samanya.";
 
         $messages = [];
         foreach ($keuangan as $val) {
             $replacements = [
-                '{PIC_KEGIATAN}'    => $memo['tor']['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
-                '{DETAIL_KEGIATAN}' => $memo['tor']['kegiatan_detail']['nama_kegiatan_detail'] ?? 'Kegiatan',
+                '{DETAIL_KEGIATAN}' => $text_kegiatan,
                 '{KEUANGAN}'        => $val['name']
             ];
-            if (!empty($val['no_wa'])) {
+            
+            if($text_kegiatan!=""){
+                $messages[]=[
+                    'phone'     =>$val['no_wa'],
+                    'message'   =>self::prepareMessage($replacements, $template)
+                ];
+            }
+        }
+
+        SendWablasJob::dispatch($messages);
+        // $result = self::sendMultipleMessages($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 18. Notify Dana Cair ke PIC (Generik untuk PK & Normal)
+    // Dipicu saat: status_ajuan = 'terbayar' di MemoCairController::validasi_keuangan()
+    // -------------------------------------------------------------------------
+    public function send_notify_dana_cair_pic($request, $memo_cair_id)
+    {
+        $memo_cair = MemoCairModel::find($memo_cair_id);
+        if (!$memo_cair) return;
+
+        $tor = TorModel::with([
+            "kegiatan_detail",
+            "kegiatan_detail.kegiatan",
+            "kegiatan_detail.user_pic_kegiatan"
+        ])->find($memo_cair['tor_id']);
+
+        $pic = $tor['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+        if (!$pic || empty($pic['no_wa'])) {
+            Log::warning('send_notify_dana_cair_pic: PIC tidak ditemukan atau no_wa kosong.', [
+                'memo_cair_id' => $memo_cair_id
+            ]);
+            return;
+        }
+
+        // ==========================================================
+        // FORMAT DATA
+        // ==========================================================
+        $tipe = $memo_cair['tipe_pencairan'] ?? 'normal';
+        $jenisTransfer = ($tipe === 'pk') ? 'UANG MUKA (PK)' : 'REIMBURSEMENT';
+        $nominal = number_format($memo_cair['total_rab'] ?? 0, 0, ',', '.');
+        $namaPic = $pic['name'] ?? 'PIC Kegiatan';
+        $detailKegiatan = $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? 'Kegiatan';
+        $tglBayar = !empty($memo_cair['tgl_bayar'])
+            ? \Carbon\Carbon::parse($memo_cair['tgl_bayar'])->isoFormat('D MMMM Y, HH:mm') . ' WIB'
+            : \Carbon\Carbon::now()->isoFormat('D MMMM Y, HH:mm') . ' WIB';
+
+        $pengaturan = PengaturanRepo::gets();
+
+        // ==========================================================
+        // TEMPLATE SAMA UNTUK PK & NORMAL
+        // ==========================================================
+        $template = $pengaturan['notify_dana_cair_pic']
+            ?? "Cosco Super APPS
+    Kpd Yth *{PIC_KEGIATAN}*
+
+    💰 *Konfirmasi Transfer Dana {JENIS_TRANSFER} Berhasil*
+
+    Dana untuk kegiatan *{DETAIL_KEGIATAN}* sebesar *Rp {NOMINAL}* telah berhasil ditransfer ke rekening Anda.
+
+    📅 Tanggal Transfer: {TGL_BAYAR}
+
+    Terima kasih atas dedikasi dan ketertiban administrasi Anda.
+
+    {AKSES_CEPAT_COSCO}";
+
+        $replacements = [
+            '{PIC_KEGIATAN}'    => $namaPic,
+            '{JENIS_TRANSFER}'  => $jenisTransfer,
+            '{DETAIL_KEGIATAN}' => $detailKegiatan,
+            '{NOMINAL}'         => $nominal,
+            '{TGL_BAYAR}'       => $tglBayar,
+        ];
+
+        $message = self::prepareMessage($replacements, $template);
+
+        $messages = [
+            [
+                'phone'   => $pic['no_wa'],
+                'message' => $message
+            ]
+        ];
+
+        SendWablasJob::dispatch($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 19. submit_spj_verifikator
+    // to verifikator_spj, permissions=specific_is_user_verifikator_spj, spj_keuangan_validasi
+    // -------------------------------------------------------------------------
+    public function send_submit_spj_verifikator($request, $memo_cair_id)
+    {
+        $memo_cair=MemoCairModel::find($memo_cair_id);
+        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.kegiatan", "kegiatan_detail.user_pic_kegiatan"])->find($memo_cair['tor_id']);
+
+        $verif = User::get()->filter(fn($user)=>
+            $user->hasPermission("specific_is_user_verifikator_spj") && 
+            $user->hasPermission("spj_keuangan_validasi")
+        );
+
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['submit_spj_verifikator'] ?? "Cosco Super APPS
+            Kpd Yth Verifikator SPJ
+            {PIC_KEGIATAN} telah menyelesaikan dan mengunggah berkas pertanggungjawaban (SPJ) kegiatan {DETAIL_KEGIATAN}. Mohon segera melakukan audit verifikasi berkas bukti belanja di Cosco Super Apps.
+
+            {AKSES_CEPAT_COSCO}";
+
+        $replacements=[
+            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail']
+        ];
+
+        $messages = [];
+        foreach ($verif as $val) {
+            $messages[]=[
+                'phone'     =>$val['no_wa'],
+                'message'   =>self::prepareMessage($replacements, $template)
+            ];
+        }
+
+        SendWablasJob::dispatch($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 20. Reminder Lapor SPJ (Menggunakan satu template seragam)
+    // -------------------------------------------------------------------------
+    public function send_remind_lapor_spj()
+    {
+        // Ambil Memo Cair yang status SPJ-nya masih di PIC ('draft' atau 'keuangan_revisi')
+        // - Normal: tgl_bayar boleh null
+        // - PK: tgl_bayar harus sudah terisi
+        $memos = MemoCairModel::with(["tor.kegiatan_detail.user_pic_kegiatan"])
+            ->whereIn('status_spj', ['draft', 'keuangan_revisi'])
+            ->where(function($query) {
+                $query->where('tipe_pencairan', 'normal')
+                      ->orWhere(function($q) {
+                          $q->where('tipe_pencairan', 'pk')
+                            ->whereNotNull('tgl_bayar');
+                      });
+            })
+            ->get();
+
+        if ($memos->isEmpty()) {
+            return; 
+        }
+
+        $pengaturan = PengaturanRepo::gets();
+        
+        // Menggunakan hanya satu template tunggal 'remind_lapor_spj'
+        $template = $pengaturan['remind_lapor_spj'] ?? "Cosco Super APPS\nKpd Yth {PIC_KEGIATAN}\n\nPengingat Laporan SPJ: Kegiatan {DETAIL_KEGIATAN} telah disetujui. Mohon segera melengkapi dan mengunggah berkas pertanggungjawaban (SPJ), kuitansi, faktur pajak, nota belanja, dan foto dokumentasi di Cosco Super Apps agar dapat diverifikasi dan diteruskan ke Bendahara.\n\n{AKSES_CEPAT_COSCO}";
+        
+        $messages = [];
+        
+        foreach ($memos as $val) {
+            $pic = $val['tor']['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+            
+            if ($pic && !empty($pic['no_wa'])) {
+                $replacements = [
+                    '{PIC_KEGIATAN}'    => $pic['name'],
+                    '{DETAIL_KEGIATAN}' => $val['tor']['kegiatan_detail']['nama_kegiatan_detail']
+                ];
+
+                $messages[] = [
+                    'phone'   => $pic['no_wa'],
+                    'message' => self::prepareMessage($replacements, $template)
+                ];
+            }
+        }
+
+        if (!empty($messages)) {
+            SendWablasJob::dispatch($messages);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 21. Reminder Verifikator SPJ (Remind Verifikator untuk cek SPJ berstatus 'sent')
+    // -------------------------------------------------------------------------
+    public function send_remind_verifikator_spj()
+    {
+        // Ambil semua Memo Cair yang SPJ-nya berstatus 'sent' (menunggu verifikasi)
+        $memos = MemoCairModel::with(["tor.kegiatan_detail"])
+            ->where("status_spj", "sent")
+            ->get();
+
+        $text_kegiatan = $memos->isEmpty()
+            ? ''
+            : $memos->pluck('tor.kegiatan_detail.nama_kegiatan_detail')->filter()->implode(', ');
+
+        // Ambil user yang memiliki hak akses sebagai Verifikator SPJ
+        $verif = User::get()->filter(fn($user) =>
+            $user->hasPermission("specific_is_user_verifikator_spj") && 
+            $user->hasPermission("spj_keuangan_validasi")
+        );
+
+        $pengaturan = PengaturanRepo::gets();
+        
+        // Template default (bisa diatur lewat menu pengaturan aplikasi)
+        $template = $pengaturan['remind_verifikator_spj'] ?? "Cosco Super APPS\nKpd Yth. *{VERIFIKATOR}*\n\nMohon izin mengingatkan, terdapat berkas pertanggungjawaban (SPJ) untuk kegiatan *{DETAIL_KEGIATAN}* yang saat ini sedang menunggu proses verifikasi dan audit dari Tim Verifikator SPJ.\n\nTautan periksa:\n{AKSES_CEPAT_COSCO}\n\nTerima kasih atas kerja samanya.";
+
+        $messages = [];
+        
+        foreach ($verif as $val) {
+            $replacements = [
+                '{DETAIL_KEGIATAN}' => $text_kegiatan,
+                '{VERIFIKATOR}'     => $val['name']
+            ];
+
+            if ($text_kegiatan != "" && !empty($val['no_wa'])) {
                 $messages[] = [
                     'phone'   => $val['no_wa'],
                     'message' => self::prepareMessage($replacements, $template)
                 ];
             }
         }
+
         if (!empty($messages)) {
             SendWablasJob::dispatch($messages);
         }
-        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // 22. Approve SPJ Valid (Notifikasi ke PIC bahwa SPJ lolos audit)
+    // -------------------------------------------------------------------------
+    public function send_approve_spj_valid($request, $memo_cair_id)
+    {
+        $memo_cair = MemoCairModel::find($memo_cair_id);
+        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.user_pic_kegiatan"])->find($memo_cair['tor_id']);
+        
+        $pic = $tor['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+        if (!$pic || empty($pic['no_wa'])) {
+            return;
+        }
+
+        $pengaturan = PengaturanRepo::gets();
+        
+        // Template default
+        $template = $pengaturan['approve_spj_valid'] ?? "Cosco Super APPS\nKpd Yth {PIC_KEGIATAN}\n\n✅ *Laporan SPJ Valid*\n\nSelamat! Berkas laporan pertanggungjawaban (SPJ) untuk kegiatan *{DETAIL_KEGIATAN}* telah diperiksa dan dinyatakan VALID (Lolos Audit) oleh Tim Verifikator. Terima kasih atas dedikasi dan tertib administrasinya.\n\n{AKSES_CEPAT_COSCO}";
+
+        $replacements = [
+            '{PIC_KEGIATAN}'    => $pic['name'],
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail']
+        ];
+
+        $messages = [
+            [
+                'phone'   => $pic['no_wa'],
+                'message' => self::prepareMessage($replacements, $template)
+            ]
+        ];
+
+        SendWablasJob::dispatch($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 23. Revisi SPJ Verifikator (Notifikasi ke PIC bahwa SPJ butuh revisi)
+    // -------------------------------------------------------------------------
+    public function send_revisi_spj_verifikator($request, $memo_cair_id)
+    {
+        $memo_cair = MemoCairModel::find($memo_cair_id);
+        $tor = TorModel::with(["kegiatan_detail", "kegiatan_detail.user_pic_kegiatan"])->find($memo_cair['tor_id']);
+        
+        $pic = $tor['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+        if (!$pic || empty($pic['no_wa'])) {
+            return;
+        }
+
+        $pengaturan = PengaturanRepo::gets();
+        
+        // Template default
+        $template = $pengaturan['revisi_spj_verifikator'] ?? "Cosco Super APPS\nKpd Yth {PIC_KEGIATAN}\n\n⚠️ *Pemberitahuan Revisi SPJ*\n\nBerkas laporan pertanggungjawaban (SPJ) untuk kegiatan *{DETAIL_KEGIATAN}* telah diperiksa oleh Verifikator dan *MEMERLUKAN REVISI*.\n\n📝 *Catatan Revisi:*\n_{CATATAN_REVISI}_\n\nMohon segera melakukan perbaikan dan mengunggah ulang berkas yang sesuai melalui tautan berikut:\n{AKSES_CEPAT_COSCO}";
+
+        // Ambil catatan revisi dari field catatan_keuangan_spj
+        $catatan = 'Silakan cek detail revisi di dalam aplikasi.';
+
+        $replacements = [
+            '{PIC_KEGIATAN}'    => $pic['name'],
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
+            '{CATATAN_REVISI}'  => $catatan
+        ];
+
+        $messages = [
+            [
+                'phone'   => $pic['no_wa'],
+                'message' => self::prepareMessage($replacements, $template)
+            ]
+        ];
+
+        SendWablasJob::dispatch($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 24. Instruksi Bayar Memo Cair ke Bendahara
+    // Dipicu saat:
+    //   - Skema PK: validasi_keuangan() dengan status_ajuan = keuangan_applied
+    //   - Skema Normal: validasi_keuangan_spj() dengan status_spj = keuangan_applied
+    // Penerima: User dengan permission "specific_is_user_bendahara"
+    // -------------------------------------------------------------------------
+    public function send_bayar_memo_cair_bendahara($request, $memo_cair_id)
+    {
+        $memo_cair = MemoCairModel::find($memo_cair_id);
+        if (!$memo_cair) return;
+
+        $tor = TorModel::with([
+            "kegiatan_detail",
+            "kegiatan_detail.kegiatan",
+            "kegiatan_detail.user_pic_kegiatan"
+        ])->find($memo_cair['tor_id']);
+
+        $pic = $tor['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+        if (!$pic) return;
+
+        // ==========================================================
+        // CARI BENDAHARA BERDASARKAN PERMISSION
+        // ==========================================================
+        $bendaharaList = User::get()->filter(fn($user) =>
+            $user->hasPermission("specific_is_user_bendahara")
+        );
+
+        // Fallback terakhir: cari berdasarkan role
+        if ($bendaharaList->isEmpty()) {
+            $fallback = User::where('role', 'bendahara')->first();
+            if ($fallback) {
+                $bendaharaList = collect([$fallback]);
+            }
+        }
+
+        // Filter hanya yang punya no_wa valid
+        $bendaharaList = $bendaharaList->filter(fn($b) => !empty($b['no_wa']));
+
+        if ($bendaharaList->isEmpty()) {
+            Log::warning('send_bayar_memo_cair_bendahara: Tidak ada bendahara yang ditemukan (permission specific_is_user_bendahara).', [
+                'memo_cair_id' => $memo_cair_id
+            ]);
+            return;
+        }
+
+        // ==========================================================
+        // FORMAT DATA UNTUK TEMPLATE
+        // ==========================================================
+        $jenis_transfer = ($memo_cair['tipe_pencairan'] === 'pk')
+            ? 'UANG MUKA (PRESEKOT KERJA / PK)'
+            : 'REIMBURSEMENT (NORMAL)';
+
+        $nominal = number_format($memo_cair['total_rab'] ?? 0, 0, ',', '.');
+        $namaPic = $pic['name'] ?? 'PIC Kegiatan';
+        $detailKegiatan = $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? 'Kegiatan';
+
+        // Info rekening PIC (opsional, jika tersedia)
+        $infoRekening = '';
+        if (!empty($pic['nama_bank']) && !empty($pic['nomor_rekening'])) {
+            $infoRekening = "\n🏦 *Rekening Tujuan:*\nBank: {$pic['nama_bank']}\nNo. Rek: {$pic['nomor_rekening']}\nA.n: {$namaPic}";
+        }
+
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['bayar_memo_cair_bendahara']
+            ?? "Cosco Super APPS
+    Kpd Yth. *{NAMA_BENDAHARA}*
+
+    Terdapat instruksi eksekusi transfer dana untuk tipe pencairan *{JENIS_TRANSFER}*.
+
+    📋 *Detail Kegiatan:*
+    Nama: {DETAIL_KEGIATAN}
+    PIC: {PIC_KEGIATAN}
+    Nominal: Rp {NOMINAL}{INFO_REKENING}
+
+    Dokumen telah divalidasi oleh Tim Keuangan/Verifikator. Mohon segera melakukan transfer ke rekening tujuan dan memperbarui status pembayaran (Terbayar) di dalam sistem.
+
+    {AKSES_CEPAT_COSCO}";
+
+        // ==========================================================
+        // KIRIM KE SEMUA BENDAHARA YANG MEMILIKI PERMISSION
+        // ==========================================================
+        $messages = [];
+        foreach ($bendaharaList as $bendahara) {
+            $replacements = [
+                '{NAMA_BENDAHARA}'  => $bendahara['name'] ?? 'Bendahara Pengeluaran',
+                '{JENIS_TRANSFER}'  => $jenis_transfer,
+                '{DETAIL_KEGIATAN}' => $detailKegiatan,
+                '{PIC_KEGIATAN}'    => $namaPic,
+                '{NOMINAL}'         => $nominal,
+                '{INFO_REKENING}'   => $infoRekening,
+            ];
+
+            $messages[] = [
+                'phone'   => $bendahara['no_wa'],
+                'message' => self::prepareMessage($replacements, $template)
+            ];
+        }
+
+        SendWablasJob::dispatch($messages);
+    }
+
+    // -------------------------------------------------------------------------
+    // 25. Reminder Bendahara untuk Transfer Dana (PK & Normal)
+    // Dipicu via Schedule: jam 08:00 dan 14:00 setiap hari
+    // Kondisi:
+    //   - PK: status_ajuan = keuangan_applied & tgl_cair_pk IS NULL
+    //   - Normal: status_ajuan = keuangan_applied & status_spj = keuangan_applied & tgl_bayar IS NULL
+    // Penerima: User dengan permission "specific_is_user_bendahara"
+    // -------------------------------------------------------------------------
+    public function send_remind_bayar_bendahara()
+    {
+        // ==========================================================
+        // 1. QUERY MEMO CAIR YANG MENUNGGU TRANSFER
+        // ==========================================================
+        $memos = MemoCairModel::with([
+            "tor.kegiatan_detail",
+            "tor.kegiatan_detail.kegiatan",
+            "tor.kegiatan_detail.user_pic_kegiatan"
+        ])
+        ->where(function($q) {
+            // SKEMA PK: menunggu transfer setelah keuangan ACC
+            $q->where(function($q2) {
+                $q2->where('tipe_pencairan', 'pk')
+                ->where('status_ajuan', 'keuangan_applied')
+                ->whereNull('tgl_cair_pk');
+            })
+            // SKEMA NORMAL: menunggu transfer setelah SPJ ACC
+            ->orWhere(function($q2) {
+                $q2->where('tipe_pencairan', 'normal')
+                ->where('status_ajuan', 'keuangan_applied')
+                ->where('status_spj', 'keuangan_applied')
+                ->whereNull('tgl_bayar');
+            });
+        })
+        ->get();
+
+        if ($memos->isEmpty()) {
+            Log::info('send_remind_bayar_bendahara: Tidak ada memo cair yang menunggu transfer.');
+            return;
+        }
+
+        // ==========================================================
+        // 2. CARI BENDAHARA BERDASARKAN PERMISSION
+        // ==========================================================
+        $bendaharaList = User::get()->filter(fn($user) =>
+            $user->hasPermission("specific_is_user_bendahara")
+        );
+
+        // Fallback: cari berdasarkan role
+        if ($bendaharaList->isEmpty()) {
+            $fallback = User::where('role', 'bendahara')->first();
+            if ($fallback) {
+                $bendaharaList = collect([$fallback]);
+            }
+        }
+
+        // Filter hanya yang punya no_wa valid
+        $bendaharaList = $bendaharaList->filter(fn($b) => !empty($b['no_wa']));
+
+        if ($bendaharaList->isEmpty()) {
+            Log::warning('send_remind_bayar_bendahara: Tidak ada bendahara yang ditemukan.', [
+                'total_memo_menunggu' => $memos->count()
+            ]);
+            return;
+        }
+
+        // ==========================================================
+        // 3. FORMAT DAFTAR KEGIATAN
+        // ==========================================================
+        $daftarKegiatan = [];
+        foreach ($memos as $memo) {
+            $pic = $memo['tor']['kegiatan_detail']['user_pic_kegiatan'] ?? null;
+            $detailKegiatan = $memo['tor']['kegiatan_detail']['nama_kegiatan_detail'] ?? 'Kegiatan';
+            $namaPic = $pic['name'] ?? 'PIC Belum Ditentukan';
+            $nominal = number_format($memo['total_rab'] ?? 0, 0, ',', '.');
+            $jenisTransfer = ($memo['tipe_pencairan'] === 'pk') ? 'UANG MUKA (PK)' : 'REIMBURSEMENT';
+
+            $daftarKegiatan[] = "• *{$detailKegiatan}* - PIC: {$namaPic} (Rp {$nominal}) - {$jenisTransfer}";
+        }
+
+        $textDaftar = implode("\n", $daftarKegiatan);
+
+        // ==========================================================
+        // 4. TEMPLATE PESAN
+        // ==========================================================
+        $pengaturan = PengaturanRepo::gets();
+        $template = $pengaturan['remind_bayar_bendahara']
+            ?? "Cosco Super APPS
+    Kpd Yth. *{BENDAHARA}*
+
+    ⏰ *Pengingat: Dana Kegiatan Menunggu Pencairan*
+
+    Terdapat kegiatan yang telah disetujui dan menunggu transfer dana dari Bendahara:
+
+    {DAFTAR_KEGIATAN}
+
+    Mohon segera melaksanakan transfer ke rekening PIC masing-masing dan memperbarui status pembayaran (Terbayar) di dalam sistem.
+
+    {AKSES_CEPAT_COSCO}";
+
+        // ==========================================================
+        // 5. KIRIM KE SEMUA BENDAHARA
+        // ==========================================================
+        $messages = [];
+        foreach ($bendaharaList as $bendahara) {
+            $replacements = [
+                '{BENDAHARA}' => $bendahara['name'] ?? 'Bendahara Pengeluaran',
+                '{DAFTAR_KEGIATAN}' => $textDaftar,
+            ];
+
+            $messages[] = [
+                'phone'   => $bendahara['no_wa'],
+                'message' => self::prepareMessage($replacements, $template)
+            ];
+        }
+
+        SendWablasJob::dispatch($messages);
+
+        Log::info('send_remind_bayar_bendahara: Reminder berhasil dikirim.', [
+            'total_bendahara' => count($messages),
+            'total_memo_menunggu' => $memos->count()
+        ]);
     }
 }

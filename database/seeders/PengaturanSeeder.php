@@ -80,7 +80,19 @@ class PengaturanSeeder extends Seeder
             "remind_memo_cair" => "",
             "submit_memo_cair" => "",
             "approve_memo_cair_keuangan" => "",
-            "reject_memo_cair_keuangan" => ""
+            "reject_memo_cair_keuangan" => "",
+            //new
+            "remind_lapor_spj" => "",
+            "remind_verifikator_spj" => "",
+            "submit_spj_verifikator" => "",
+            "remind_koordinator_tor" => "",
+            "remind_wd_tor" => "",
+            "remind_keuangan_memo_cair" => "",
+            "approve_spj_valid" =>"",
+            "revisi_spj_verifikator"=>"",
+            "remind_bayar_bendahara"=>"",
+            "bayar_memo_cair_bendahara"=>"",
+            "notify_dana_cair_pic"=>""
         ];
 
         foreach ($notifikasi_wa as $key=>$value) {
