@@ -698,7 +698,7 @@ export default function TablePerjalananDinasPersetujuan({
                                     </Label>
                                     <NumericFormat
                                         customInput={Input}
-                                        thousandSeparator="."
+                                        thousandSeparator=","
                                         decimalSeparator=","
                                         prefix="Rp "
                                         value={modalValidasi.nominal_disetujui}

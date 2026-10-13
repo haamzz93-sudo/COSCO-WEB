@@ -786,7 +786,7 @@ export default function DashboardIndex(props: any) {
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-2">
                                                     <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 font-heading leading-tight">Total</span>
                                                     <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono tracking-tight my-0.5">
-                                                        <NumericFormat value={totalPaguProporsi} displayType="text" decimalScale={0} thousandSeparator="." prefix="Rp " />
+                                                        <NumericFormat value={totalPaguProporsi} displayType="text" decimalScale={0} thousandSeparator="," prefix="Rp " />
                                                     </span>
                                                     <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 font-heading leading-tight">(100%)</span>
                                                 </div>
@@ -805,7 +805,7 @@ export default function DashboardIndex(props: any) {
                                                     </div>
                                                     <div className="flex items-center gap-2 shrink-0 font-mono text-[11px]">
                                                         <span className="font-black text-slate-900 dark:text-white">
-                                                            <NumericFormat value={item.biaya} displayType="text" decimalScale={0} thousandSeparator="." prefix="Rp " />
+                                                            <NumericFormat value={item.biaya} displayType="text" decimalScale={0} thousandSeparator="," prefix="Rp " />
                                                         </span>
                                                         <span className="font-bold text-blue-900 dark:text-blue-400 w-14 text-end">
                                                             ({(item.percent || 0).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)
