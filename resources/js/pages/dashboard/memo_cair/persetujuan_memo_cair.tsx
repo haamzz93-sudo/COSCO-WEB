@@ -73,7 +73,7 @@ export default function PersetujuanMemoCair(props: any) {
         page: 1,
         q: "",
         program_studi_id: "",
-        tahun: "2025",
+        tahun: String(new Date().getFullYear() || "2026"),
         status_ajuan: isBendaharaMode ? "bendahara_all" : (isValidasiSpjMode ? "keuangan_applied" : "sent,keuangan_applied,keuangan_rejected,terbayar")
     })
 

@@ -96,13 +96,13 @@ export default function KegiatanPage(props: any = {}) {
         last_page: 0,
         page: 1,
         q: "",
-        tahun: "2025"
+        tahun: String(new Date().getFullYear() || "2026")
     })
 
     const [modal_tambah, setModalTambah] = useState({
         open: false,
         data: {
-            tahun: "2025",
+            tahun: String(new Date().getFullYear() || "2026"),
             nama_kegiatan: ""
         }
     })
@@ -208,7 +208,7 @@ export default function KegiatanPage(props: any = {}) {
         setModalTambah({
             open: !modal_tambah.open,
             data: {
-                tahun: filter.tahun || "2025",
+                tahun: filter.tahun || String(new Date().getFullYear() || "2026"),
                 nama_kegiatan: ""
             }
         })

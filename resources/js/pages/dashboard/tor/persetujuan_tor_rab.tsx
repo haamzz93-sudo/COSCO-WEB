@@ -94,7 +94,7 @@ export default function PersetujuanTorRab() {
         page: 1,
         per_page: 15,
         q: "",
-        tahun: "2025",
+        tahun: String(new Date().getFullYear() || "2026"),
         program_studi_id: "",
         status_ajuan: defaultStatus,
         wakil_dekan_id: ""
@@ -288,7 +288,7 @@ function TableApproval(props: any) {
 
                                         {/* TAHUN */}
                                         <TableCell className="px-3 py-4 text-center align-middle border-r border-slate-200/70 dark:border-slate-800 font-mono font-bold text-slate-700 dark:text-slate-300">
-                                            {item.kegiatan_detail?.kegiatan?.tahun || item.tahun || "2025"}
+                                            {item.kegiatan_detail?.kegiatan?.tahun || item.tahun || String(new Date().getFullYear() || "2026")}
                                         </TableCell>
 
                                         {/* IKU / IK */}

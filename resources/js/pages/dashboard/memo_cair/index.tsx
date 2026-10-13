@@ -39,7 +39,7 @@ export default function Page() {
         last_page: 0,
         page: 1,
         q: "",
-        tahun: "2025"
+        tahun: String(new Date().getFullYear() || "2026")
     })
 
     const gets_kegiatan = useQuery({
