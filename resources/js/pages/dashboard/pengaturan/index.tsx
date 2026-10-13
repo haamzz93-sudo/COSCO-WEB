@@ -24,6 +24,8 @@ import {
     Info, 
     Key,
     Landmark, 
+    PenLine,
+    Layers,
     ListFilter,
     Loader2,
     MessageCircle,
