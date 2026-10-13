@@ -200,7 +200,8 @@ export default function DashboardIndex(props: any) {
     const rt = props.realtime ? { ...props, ...props.realtime } : props;
 
     // Selected Year State
-    const selectedYear = String(rt.selected_year || "2025");
+    const currentRealtimeYear = String(new Date().getFullYear() || "2026");
+    const selectedYear = String(rt.selected_year || currentRealtimeYear);
     const availableYears: string[] = rt.available_years || ["2026", "2025", "2024"];
 
     // 8 Metrik Finansial
@@ -384,22 +385,51 @@ export default function DashboardIndex(props: any) {
                             </div>
                         </div>
 
-                    {/* FILTER TAHUN DROPDOWN + BUTTONS */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        <div className="flex items-center gap-2 bg-white/10 dark:bg-slate-800/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 dark:border-slate-700">
-                            <Calendar className="size-4 text-amber-400" />
-                            <span className="text-xs font-bold text-white hidden sm:inline">Tahun Anggaran:</span>
-                            <select
-                                value={selectedYear}
-                                onChange={(e) => handleYearChange(e.target.value)}
-                                className="bg-slate-900 text-white font-black text-xs px-3 py-1.5 rounded-lg border border-blue-400/40 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
-                            >
-                                {availableYears.map((y: string) => (
-                                    <option key={y} value={y} className="bg-slate-900 text-white">
-                                        Tahun {y} {y === "2025" ? "(Aktif)" : ""}
-                                    </option>
-                                ))}
-                            </select>
+                    {/* FILTER TAHUN DROPDOWN EKSEKUTIF BERWIBAWA */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 bg-[#0f172a]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-blue-400/30 shadow-xs">
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                                <Calendar className="size-4" />
+                                <span className="text-[11px] font-bold text-blue-200 uppercase tracking-wider hidden sm:inline">TA :</span>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => handleYearChange(e.target.value)}
+                                    className="appearance-none bg-blue-950/90 hover:bg-blue-900 text-white font-extrabold text-xs pl-3 pr-8 py-1.5 rounded-lg border border-blue-400/40 hover:border-amber-400/80 focus:outline-none focus:ring-2 focus:ring-amber-400/60 cursor-pointer transition-all shadow-inner tracking-wide"
+                                >
+                                    {availableYears.map((y: string) => {
+                                        const isCurrent = y === String(new Date().getFullYear());
+                                        return (
+                                            <option key={y} value={y} className="bg-slate-900 text-white font-bold py-1">
+                                                Tahun {y} {isCurrent ? "• (Aktif)" : ""}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <ChevronDown className="size-3.5 text-blue-300 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+
+                            {/* Quick Year Switch Buttons */}
+                            <div className="hidden md:flex items-center gap-1 ml-1 pl-2 border-l border-white/15">
+                                {availableYears.slice(0, 3).map((y: string) => {
+                                    const isSel = y === selectedYear;
+                                    return (
+                                        <button
+                                            key={`pill-year-${y}`}
+                                            type="button"
+                                            onClick={() => handleYearChange(y)}
+                                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                                                isSel
+                                                    ? "bg-amber-400 text-blue-950 font-black shadow-xs scale-105"
+                                                    : "text-blue-200/80 hover:text-white hover:bg-white/10"
+                                            }`}
+                                        >
+                                            {y}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>

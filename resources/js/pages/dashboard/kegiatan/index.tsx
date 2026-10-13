@@ -664,13 +664,16 @@ const TableKegiatan = (props: any) => {
                 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
                     
-                    <div className="w-full sm:w-36">
-                        <Select
-                            options={options_tahun}
-                            value={options_tahun.find(f => f.value === props.filter.tahun)}
-                            onChange={(e: any) => typeFilter({ target: { name: "tahun", value: e?.value || "" } })}
-                            className="text-xs font-semibold"
-                        />
+                    <div className="w-full sm:w-44 flex items-center gap-2 bg-slate-50 dark:bg-slate-950/70 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <Calendar className="size-4 text-amber-500 shrink-0" />
+                        <div className="flex-1">
+                            <Select
+                                options={options_tahun}
+                                value={options_tahun.find(f => f.value === props.filter.tahun)}
+                                onChange={(e: any) => typeFilter({ target: { name: "tahun", value: e?.value || "" } })}
+                                className="text-xs font-bold border-0 shadow-none bg-transparent"
+                            />
+                        </div>
                     </div>
 
                     <div className="relative w-full sm:w-72">

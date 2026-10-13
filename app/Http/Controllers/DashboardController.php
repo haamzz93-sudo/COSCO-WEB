@@ -42,9 +42,8 @@ class DashboardController extends Controller
             $isExecutive = $isSuperAdmin || $isKoordinator || $isWakilDekan || $isSubKor || $isPimpinan;
             $isPICOnly = !$isExecutive;
 
-            // 1. Tahun Filter Logic
-            $latestYearFromDb = DB::table("kegiatans")->max("tahun");
-            $defaultYear = $latestYearFromDb ? (string)$latestYearFromDb : (string)date("Y");
+            // 1. Tahun Filter Logic (Otomatis Sinkron Tahun Realtime Berjalan)
+            $defaultYear = (string)date("Y");
             $tahun = (string) $request->query('tahun', $defaultYear);
 
             $availableYearsFromDb = DB::table("kegiatans")
