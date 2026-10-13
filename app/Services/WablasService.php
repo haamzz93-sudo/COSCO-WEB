@@ -1324,4 +1324,93 @@ class WablasService
             'total_memo_menunggu' => $memos->count()
         ]);
     }
+
+    // -------------------------------------------------------------------------
+    // HPS / BHP & INVENTARIS: 7 TAHAPAN ALUR PENGADAAN (NOTIFIKASI RESMI WABLAS)
+    // -------------------------------------------------------------------------
+    public function send_hps_notification(string $triggerKey, $kegiatanDetailId, array $extra = [])
+    {
+        try {
+            $pengaturan = PengaturanRepo::gets();
+            $template = $pengaturan[$triggerKey] ?? null;
+            if (empty($template)) {
+                return;
+            }
+
+            $detail = \App\Models\KegiatanDetailModel::with(['kegiatan', 'user_pic_kegiatan'])->find($kegiatanDetailId);
+            if (!$detail) {
+                return;
+            }
+
+            $picName = $detail->user_pic_kegiatan->name ?? 'PIC Kegiatan';
+            $picPhone = $detail->user_pic_kegiatan->no_wa ?? null;
+            $namaKegiatan = $detail->nama_kegiatan_detail ?? ($detail->kegiatan->nama_kegiatan ?? 'Kegiatan Pengadaan');
+            $nominal = number_format($detail->pagu ?? 0, 0, ',', '.');
+            $link = url('/dashboard/tors/rab/' . $detail->id);
+
+            $replacements = [
+                '{PIC_KEGIATAN}'      => $picName,
+                '{nama_pic}'          => $picName,
+                '{DETAIL_KEGIATAN}'   => $namaKegiatan,
+                '{detail_kegiatan}'   => $namaKegiatan,
+                '{NOMINAL}'           => $nominal,
+                '{nominal}'           => $nominal,
+                '{CATATAN_REVISI}'    => $extra['catatan_revisi'] ?? '-',
+                '{catatan_revisi}'    => $extra['catatan_revisi'] ?? '-',
+                '{AKSES_CEPAT_COSCO}' => $link,
+                '{link_sistem}'       => $link,
+                '{KATEGORI}'          => $detail->kategori_pengadaan ?? 'Pengadaan',
+            ];
+
+            // Target phone based on stage
+            $targetPhones = [];
+            if (in_array($triggerKey, ['hps_submit_pic'])) {
+                // To Koordinator
+                $koors = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%koordinator%'))->get();
+                foreach ($koors as $k) {
+                    if (!empty($k->no_wa)) $targetPhones[] = $k->no_wa;
+                }
+            } elseif (in_array($triggerKey, ['hps_approve_koordinator'])) {
+                // To Pejabat Pengadaan (PP)
+                $pps = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%pengadaan%'))->get();
+                foreach ($pps as $p) {
+                    if (!empty($p->no_wa)) $targetPhones[] = $p->no_wa;
+                }
+            } elseif (in_array($triggerKey, ['hps_approve_pp'])) {
+                // To Wakil Dekan II
+                $wds = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%dekan%'))->get();
+                foreach ($wds as $w) {
+                    if (!empty($w->no_wa)) $targetPhones[] = $w->no_wa;
+                }
+            } elseif (in_array($triggerKey, ['hps_approve_wd'])) {
+                // To PP and PIC
+                if (!empty($picPhone)) $targetPhones[] = $picPhone;
+                $pps = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%pengadaan%'))->get();
+                foreach ($pps as $p) {
+                    if (!empty($p->no_wa)) $targetPhones[] = $p->no_wa;
+                }
+            } else {
+                // To PIC
+                if (!empty($picPhone)) $targetPhones[] = $picPhone;
+            }
+
+            if (empty($targetPhones)) {
+                return;
+            }
+
+            $messageText = self::prepareMessage($replacements, $template);
+            $messages = [];
+            foreach (array_unique($targetPhones) as $phone) {
+                $messages[] = [
+                    'phone'   => $phone,
+                    'message' => $messageText
+                ];
+            }
+
+            SendWablasJob::dispatch($messages);
+            Log::info("Wablas HPS [{$triggerKey}] dispatched to " . count($messages) . " recipients.");
+        } catch (\Throwable $e) {
+            Log::error("Failed to send Wablas HPS notification: " . $e->getMessage());
+        }
+    }
 }

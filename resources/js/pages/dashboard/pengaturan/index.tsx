@@ -58,7 +58,7 @@ const MySwal = withReactContent(swal)
 
 export default function PengaturanPage() {
     const auth: any = usePage().props.auth
-    const [activeTab, setActiveTab] = useState<"api_key_ai" | "prompt_tor" | "prompt_rab" | "prompt_hps_inventaris" | "prompt_hps_bhp" | "bendahara" | "notifikasi_wa">("api_key_ai")
+    const [activeTab, setActiveTab] = useState<"api_key_ai" | "prompt_tor" | "prompt_rab" | "prompt_hps_inventaris" | "prompt_hps_bhp" | "bendahara" | "notifikasi_wa" | "notifikasi_wa_hps">("api_key_ai")
     const [userOptions, setUserOptions] = useState<any[]>([])
     const [showApiKey, setShowApiKey] = useState(false)
     const [copied, setCopied] = useState(false)
@@ -471,7 +471,20 @@ export default function PengaturanPage() {
                             }`}
                         >
                             <MessageSquare className="size-4 text-emerald-600 dark:text-emerald-400" />
-                            <span>Template WhatsApp (23 Template)</span>
+                            <span>Template WhatsApp (26 Template)</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("notifikasi_wa_hps")}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+                                activeTab === "notifikasi_wa_hps"
+                                    ? "bg-[#172554] text-white shadow-xs"
+                                    : "bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 hover:bg-blue-100 border border-blue-300 dark:border-blue-800"
+                            }`}
+                        >
+                            <Layers className="size-4 text-blue-700 dark:text-blue-400" />
+                            <span>Template WA BHP & Inventaris (7 Tahap)</span>
                         </button>
                     </div>
 
@@ -488,8 +501,20 @@ export default function PengaturanPage() {
                                 initialValues={{
                                     gemini_api_key: dataObj.gemini_api_key || dataObj.GEMINI_API_KEY || "",
                                     wablas_url: dataObj.wablas_url || "https://smg.wablas.com",
-                                    wablas_api_token: dataObj.wablas_api_token || "",
-                                    wablas_api_secret: dataObj.wablas_api_secret || "",
+                                    wablas_api_token: dataObj.wablas_api_token || "MBJ6HeYdeuKbVwqJe2aAweZm3WVdTpjhh3xu6fnKN0qnYB3M0wA9URU",
+                                    wablas_api_secret: dataObj.wablas_api_secret || "9ScrDrmZ",
+
+                                    // 7 TAHAP ALUR HPS BHP & INVENTARIS
+                                    hps_submit_pic: dataObj.hps_submit_pic || "Cosco Super APPS\nKpd Yth *{KOORDINATOR}*\n\n*{PIC_KEGIATAN}* telah menyusun dan mengajukan rincian usulan pengadaan *{DETAIL_KEGIATAN}* (HPS) dengan pagu anggaran Rp {NOMINAL}.\nMohon untuk memeriksa dan melakukan telaah spesifikasi teknis barang di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_approve_koordinator: dataObj.hps_approve_koordinator || "Cosco Super APPS\nKpd Yth *Pejabat Pengadaan (PP)*\n\nUsulan rincian pengadaan *{DETAIL_KEGIATAN}* telah disetujui oleh Koordinator Kampus Madiun.\nMohon segera melakukan telaah kewajaran harga dan spesifikasi teknis HPS di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_revisi_koordinator: dataObj.hps_revisi_koordinator || "Cosco Super APPS\nKpd Yth *{PIC_KEGIATAN}*\n\nUsulan HPS untuk kegiatan *{DETAIL_KEGIATAN}* memerlukan revisi dari Koordinator.\nCatatan: {CATATAN_REVISI}\nMohon segera cek dan selesaikan revisi ajuan Anda di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_approve_pp: dataObj.hps_approve_pp || "Cosco Super APPS\nKpd Yth *{WAKIL_DEKAN}*\n\nRincian HPS pengadaan *{DETAIL_KEGIATAN}* telah diverifikasi dan disetujui oleh Pejabat Pengadaan.\nMohon berkenan mereview dan memberikan otorisasi pengesahan pimpinan di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_revisi_pp: dataObj.hps_revisi_pp || "Cosco Super APPS\nKpd Yth *{PIC_KEGIATAN}*\n\nRincian HPS kegiatan *{DETAIL_KEGIATAN}* memerlukan revisi spesifikasi dari Pejabat Pengadaan.\nCatatan: {CATATAN_REVISI}\nMohon segera periksa dan perbaiki spesifikasi teknis di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_approve_wd: dataObj.hps_approve_wd || "Cosco Super APPS\nKpd Yth *Pejabat Pengadaan & {PIC_KEGIATAN}*\n\nYeay, usulan pengadaan *{DETAIL_KEGIATAN}* sebesar Rp {NOMINAL} telah DISETUJUI & DIOTORISASI oleh Wakil Dekan II SV UNS.\nPaket pengadaan kini siap dieksekusi proses pemesanannya oleh Pejabat Pengadaan.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_revisi_wd: dataObj.hps_revisi_wd || "Cosco Super APPS\nKpd Yth *{PIC_KEGIATAN}*\n\nUsulan pengadaan *{DETAIL_KEGIATAN}* memerlukan arahan perbaikan dari Wakil Dekan II.\nCatatan: {CATATAN_REVISI}\nMohon segera tindak lanjuti di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_proses_pengadaan: dataObj.hps_proses_pengadaan || "Cosco Super APPS\nKpd Yth *{PIC_KEGIATAN}*\n\nPemberitahuan: Paket belanja pengadaan *{DETAIL_KEGIATAN}* saat ini SEDANG DALAM PROSES PEMESANAN oleh Pejabat Pengadaan.\nMohon menunggu proses kedatangan dan pengiriman barang ke kampus.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_upload_bast_pp: dataObj.hps_upload_bast_pp || "Cosco Super APPS\nKpd Yth *{PIC_KEGIATAN}*\n\nPemberitahuan: Dokumen Berita Acara Serah Terima (BAST) & Bukti Transaksi belanja pengadaan *{DETAIL_KEGIATAN}* telah berhasil diunggah oleh Pejabat Pengadaan.\nBarang telah diterima resmi dan siap untuk serah terima operasional.\n\n*Link {AKSES_CEPAT_COSCO}*",
+                                    hps_selesai_final: dataObj.hps_selesai_final || "Cosco Super APPS\nPemberitahuan: Seluruh 7 tahapan proses pengadaan *{DETAIL_KEGIATAN}* telah SELESAI TUNTAS 100%.\nDokumen BAST, kuitansi, dan transaksi resmi telah tersimpan aman di Cosco Super Apps.\n\n*Link {AKSES_CEPAT_COSCO}*",
                                     prompt_tor: dataObj.prompt_tor || "",
                                     prompt_rab: dataObj.prompt_rab || "",
                                     prompt_hps_inventaris: dataObj.prompt_hps_inventaris || "",
@@ -1373,6 +1398,354 @@ export default function PengaturanPage() {
                                                 </div>
                                             )
                                         })()}
+
+                                        {/* TAB 8: TEMPLATE WA KHUSUS BHP & INVENTARIS (7 TAHAPAN HPS) */}
+                                        {activeTab === "notifikasi_wa_hps" && (() => {
+                                            const baseHpsTemplates = [
+                                                { no: 1, stage: "1", stageTitle: "Tahap 1: Pengajuan Usulan Barang & HPS", title: "PIC Mengajukan Usulan HPS ke Koordinator", key: "hps_submit_pic", recipient: "Koordinator Madiun", timing: "Realtime saat PIC klik Ajukan HPS", color: "blue" },
+                                                { no: 2, stage: "2", stageTitle: "Tahap 2: Telaah & Validasi Koordinator", title: "Koordinator Menyetujui HPS (Maju ke PP)", key: "hps_approve_koordinator", recipient: "Pejabat Pengadaan (PP)", timing: "Realtime saat Koordinator klik ACC HPS", color: "emerald" },
+                                                { no: 3, stage: "2", stageTitle: "Tahap 2: Telaah & Validasi Koordinator", title: "Catatan Revisi HPS dari Koordinator", key: "hps_revisi_koordinator", recipient: "PIC Kegiatan", timing: "Realtime saat Koordinator minta Revisi", color: "rose" },
+                                                { no: 4, stage: "3", stageTitle: "Tahap 3: Verifikasi Teknis Pejabat Pengadaan", title: "PP Menyetujui HPS (Maju ke Wakil Dekan II)", key: "hps_approve_pp", recipient: "Wakil Dekan II SV UNS", timing: "Realtime saat PP klik Validasi HPS", color: "emerald" },
+                                                { no: 5, stage: "3", stageTitle: "Tahap 3: Verifikasi Teknis Pejabat Pengadaan", title: "Catatan Revisi HPS dari Pejabat Pengadaan", key: "hps_revisi_pp", recipient: "PIC Kegiatan", timing: "Realtime saat PP minta Revisi Teknis", color: "rose" },
+                                                { no: 6, stage: "4", stageTitle: "Tahap 4: Otorisasi & Penetapan Wakil Dekan II", title: "Wakil Dekan II Mengesahkan Pengadaan", key: "hps_approve_wd", recipient: "Pejabat Pengadaan & PIC Kegiatan", timing: "Realtime saat Wadek II klik Otorisasi", color: "emerald" },
+                                                { no: 7, stage: "4", stageTitle: "Tahap 4: Otorisasi & Penetapan Wakil Dekan II", title: "Catatan Koreksi Pengadaan dari Wakil Dekan II", key: "hps_revisi_wd", recipient: "Pejabat Pengadaan / PIC", timing: "Realtime saat Wadek II minta Arahan Revisi", color: "rose" },
+                                                { no: 8, stage: "5", stageTitle: "Tahap 5: Proses Pemesanan / Pengadaan", title: "Eksekusi Pemesanan oleh Pejabat Pengadaan", key: "hps_proses_pengadaan", recipient: "PIC Kegiatan", timing: "Realtime saat status pengadaan aktif diproses", color: "blue" },
+                                                { no: 9, stage: "6", stageTitle: "Tahap 6: Unggah BAST & Dokumen Transaksi", title: "BAST & Faktur Transaksi Diunggah oleh PP", key: "hps_upload_bast_pp", recipient: "PIC Kegiatan & Tim Satpam / Sarpras", timing: "Realtime saat Pejabat Pengadaan unggah berkas BAST", color: "emerald" },
+                                                { no: 10, stage: "7", stageTitle: "Tahap 7: Pengadaan Selesai Tuntas", title: "Pemberitahuan Pengadaan Selesai Tuntas 100%", key: "hps_selesai_final", recipient: "PIC Kegiatan & Manajemen", timing: "Otomatis saat dokumen BAST diverifikasi lengkap", color: "blue" }
+                                            ]
+
+                                            const allTemplates = [...baseHpsTemplates, ...customTemplates]
+                                            const filteredList = allTemplates.filter(item => {
+                                                const matchStage = filterStage === "all" || item.stage === filterStage
+                                                const q = searchWA.toLowerCase()
+                                                const textVal = String(formik.values[item.key] || item.message || "").toLowerCase()
+                                                const matchQuery = !q || item.title.toLowerCase().includes(q) || item.key.toLowerCase().includes(q) || item.recipient.toLowerCase().includes(q) || textVal.includes(q)
+                                                return matchStage && matchQuery
+                                            })
+
+                                            const handleOpenEdit = (item: any) => {
+                                                setModalEditWA({
+                                                    open: true,
+                                                    data: {
+                                                        title: item.title,
+                                                        key: item.key,
+                                                        role: item.recipient,
+                                                        timing: item.timing,
+                                                        message: String(formik.values[item.key] !== undefined ? formik.values[item.key] : item.message || "")
+                                                    }
+                                                })
+                                            }
+
+                                            const handleOpenPreview = (item: any) => {
+                                                setModalPreviewWA({
+                                                    open: true,
+                                                    data: {
+                                                        title: item.title,
+                                                        key: item.key,
+                                                        role: item.recipient,
+                                                        timing: item.timing,
+                                                        message: String(formik.values[item.key] !== undefined ? formik.values[item.key] : item.message || "")
+                                                    }
+                                                })
+                                            }
+
+                                            return (
+                                                <div className="space-y-6">
+                                                    
+                                                    {/* KARTU KONEKSI GATEWAY WABLAS */}
+                                                    <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-4">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <h4 className="text-sm font-black text-blue-950 dark:text-blue-300 font-heading">
+                                                                        Konfigurasi WhatsApp Gateway (Wablas API)
+                                                                    </h4>
+                                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
+                                                                        <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                                                        Gateway Terhubung
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-xs text-blue-800/80 dark:text-blue-400">
+                                                                    Parameter endpoint dan API Secret Token untuk pengiriman notifikasi otomatis alur kegiatan & reminder
+                                                                </p>
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => setModalTestWAOpen(true)}
+                                                                className="h-9 px-4 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
+                                                            >
+                                                                <Send className="size-3.5" />
+                                                                <span>Kirim Tes Pesan WA</span>
+                                                            </Button>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Domain / Base URL Gateway</label>
+                                                                <Input
+                                                                    name="wablas_url"
+                                                                    className="h-9 text-xs rounded-lg bg-white dark:bg-slate-900"
+                                                                    value={formik.values.wablas_url}
+                                                                    onChange={formik.handleChange}
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">API Key / Token Wablas</label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setShowWablasToken(!showWablasToken)}
+                                                                        className="text-[10px] text-blue-600 hover:underline cursor-pointer"
+                                                                    >
+                                                                        {showWablasToken ? "Sembunyikan" : "Tampilkan"}
+                                                                    </button>
+                                                                </div>
+                                                                <Input
+                                                                    type={showWablasToken ? "text" : "password"}
+                                                                    name="wablas_api_token"
+                                                                    className="h-9 text-xs rounded-lg bg-white dark:bg-slate-900 font-mono"
+                                                                    value={formik.values.wablas_api_token}
+                                                                    onChange={formik.handleChange}
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">API Secret Key Wablas</label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setShowWablasSecret(!showWablasSecret)}
+                                                                        className="text-[10px] text-blue-600 hover:underline cursor-pointer"
+                                                                    >
+                                                                        {showWablasSecret ? "Sembunyikan" : "Tampilkan"}
+                                                                    </button>
+                                                                </div>
+                                                                <Input
+                                                                    type={showWablasSecret ? "text" : "password"}
+                                                                    name="wablas_api_secret"
+                                                                    className="h-9 text-xs rounded-lg bg-white dark:bg-slate-900 font-mono"
+                                                                    value={formik.values.wablas_api_secret}
+                                                                    onChange={formik.handleChange}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* HEADER CRUD TEMPLATES HPS */}
+                                                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 text-white space-y-3">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Layers className="size-4 text-amber-400" />
+                                                                    <h4 className="text-sm font-black font-heading">
+                                                                        Template WhatsApp Alur BHP & Inventaris (7 Tahapan HPS)
+                                                                    </h4>
+                                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded bg-blue-900/80 text-blue-200 border border-blue-700">
+                                                                        10 Template Aktif
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-xs text-slate-300">
+                                                                    Kelola alur komunikasi WhatsApp mulai dari penyusunan spesifikasi teknis HPS, telaah Koordinator, verifikasi PP, otorisasi Wadek II, pemesanan, hingga upload berkas BAST.
+                                                                </p>
+                                                            </div>
+
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => setModalTambahWA({
+                                                                    open: true,
+                                                                    data: {
+                                                                        title: "",
+                                                                        key: "",
+                                                                        stage: "1",
+                                                                        recipient: "",
+                                                                        timing: "",
+                                                                        message: ""
+                                                                    }
+                                                                })}
+                                                                className="h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                                                            >
+                                                                <Plus className="size-4" />
+                                                                <span>Tambah Template HPS</span>
+                                                            </Button>
+                                                        </div>
+
+                                                        {/* VARIABEL DINAMIS BADGES */}
+                                                        <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                                                            <span className="font-bold text-amber-400 uppercase tracking-wider text-[10px]">Variabel Dinamis:</span>
+                                                            <div className="flex items-center gap-2 flex-wrap font-mono">
+                                                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200">{`{PIC_KEGIATAN}`} : Nama PIC</span>
+                                                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200">{`{DETAIL_KEGIATAN}`} : Nama Paket Barang</span>
+                                                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200">{`{NOMINAL}`} : Pagu Anggaran</span>
+                                                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200">{`{CATATAN_REVISI}`} : Catatan Koreksi</span>
+                                                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200">{`{AKSES_CEPAT_COSCO}`} : Tautan HPS</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* FILTER & PENCARIAN TEMPLATES HPS */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                            <div className="relative flex-1 max-w-sm">
+                                                                <Search className="size-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                                <Input
+                                                                    type="text"
+                                                                    placeholder="Cari tahapan, key trigger, penerima, atau isi..."
+                                                                    value={searchWA}
+                                                                    onChange={(e) => setSearchWA(e.target.value)}
+                                                                    className="h-9 pl-9 text-xs rounded-xl bg-white dark:bg-slate-900"
+                                                                />
+                                                            </div>
+
+                                                            <select
+                                                                value={filterStage}
+                                                                onChange={(e) => setFilterStage(e.target.value)}
+                                                                className="h-9 px-3 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+                                                            >
+                                                                <option value="all">Semua Tahapan (7 Tahap HPS)</option>
+                                                                <option value="1">Tahap 1: Pengajuan Usulan Barang & HPS</option>
+                                                                <option value="2">Tahap 2: Telaah & Validasi Koordinator</option>
+                                                                <option value="3">Tahap 3: Verifikasi Teknis Pejabat Pengadaan</option>
+                                                                <option value="4">Tahap 4: Otorisasi Wakil Dekan II</option>
+                                                                <option value="5">Tahap 5: Proses Pemesanan / Pengadaan</option>
+                                                                <option value="6">Tahap 6: Unggah BAST & Transaksi</option>
+                                                                <option value="7">Tahap 7: Selesai Tuntas</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* MODE TOGGLE VIEW */}
+                                                        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setViewModeWA("table")}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                                    viewModeWA === "table"
+                                                                        ? "bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-300 shadow-xs font-extrabold"
+                                                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                                                                }`}
+                                                            >
+                                                                <FileSpreadsheet className="size-3.5" />
+                                                                <span>Mode Tabel CRUD</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setViewModeWA("form")}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                                    viewModeWA === "form"
+                                                                        ? "bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-300 shadow-xs font-extrabold"
+                                                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                                                                }`}
+                                                            >
+                                                                <PenLine className="size-3.5" />
+                                                                <span>Mode Form Textarea</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* DAFTAR TEMPLATE HPS (TABEL ATAU FORM) */}
+                                                    {viewModeWA === "table" ? (
+                                                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                                                            <table className="w-full text-xs text-left border-collapse">
+                                                                <thead>
+                                                                    <tr className="bg-slate-100 dark:bg-slate-800/80 text-[11px] font-black uppercase text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                                                        <th className="p-3 w-10 text-center">#</th>
+                                                                        <th className="p-3 min-w-[200px]">Tahapan Alur & Trigger Key</th>
+                                                                        <th className="p-3 min-w-[170px]">Penerima & Waktu Kirim</th>
+                                                                        <th className="p-3 min-w-[280px]">Pratinjau Pesan Template</th>
+                                                                        <th className="p-3 w-28 text-center">Aksi</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                                    {filteredList.map((item, idx) => {
+                                                                        const rawMsg = formik.values[item.key] !== undefined ? formik.values[item.key] : item.message || ""
+                                                                        return (
+                                                                            <tr key={`hps-tpl-${item.key}-${idx}`} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                                                                <td className="p-3 text-center font-bold text-slate-400">
+                                                                                    {item.no || idx + 1}
+                                                                                </td>
+                                                                                <td className="p-3 space-y-1">
+                                                                                    <div className="font-extrabold text-slate-900 dark:text-white">
+                                                                                        {item.title}
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                                        <span className="font-mono text-[10px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded">
+                                                                                            {item.key}
+                                                                                        </span>
+                                                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                                                            Tahap {item.stage}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="p-3 space-y-1">
+                                                                                    <div className="font-bold text-slate-800 dark:text-slate-200">
+                                                                                        {item.recipient}
+                                                                                    </div>
+                                                                                    <div className="text-[10px] text-slate-500 leading-tight">
+                                                                                        {item.timing}
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="p-3">
+                                                                                    <div className="text-slate-600 dark:text-slate-300 font-mono text-[11px] bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-800 line-clamp-3 whitespace-pre-line">
+                                                                                        {rawMsg}
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="p-3 text-center">
+                                                                                    <div className="flex items-center justify-center gap-1.5">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleOpenPreview(item)}
+                                                                                            title="Pratinjau Tampilan Chat WhatsApp"
+                                                                                            className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer border border-emerald-200"
+                                                                                        >
+                                                                                            <MessageSquare className="size-3.5" />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleOpenEdit(item)}
+                                                                                            title="Edit Template Pesan"
+                                                                                            className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-100 cursor-pointer border border-blue-200"
+                                                                                        >
+                                                                                            <PenLine className="size-3.5" />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        )
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-4">
+                                                            {filteredList.map((item, idx) => (
+                                                                <div key={`hps-form-${item.key}-${idx}`} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div>
+                                                                            <span className="text-xs font-black text-slate-900 dark:text-white">
+                                                                                {item.title}
+                                                                            </span>
+                                                                            <span className="text-[10px] text-slate-500 block">
+                                                                                Penerima: {item.recipient} ({item.timing})
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                                            {item.key}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Textarea
+                                                                        rows={4}
+                                                                        name={item.key}
+                                                                        className="text-xs font-sans rounded-lg bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 leading-relaxed text-slate-900 dark:text-white font-mono"
+                                                                        value={formik.values[item.key] !== undefined ? formik.values[item.key] : item.message}
+                                                                        onChange={formik.handleChange}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            )
+                                        })()}
+
 
                                         {/* ACTION BUTTON */}
                                         <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">

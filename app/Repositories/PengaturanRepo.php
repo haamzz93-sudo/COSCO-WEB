@@ -23,6 +23,17 @@ class PengaturanRepo{
             }
         }
 
+        // Default kredensial resmi Wablas Gateway
+        if (empty($new_data['wablas_url'])) {
+            $new_data['wablas_url'] = 'https://smg.wablas.com';
+        }
+        if (empty($new_data['wablas_api_token'])) {
+            $new_data['wablas_api_token'] = 'MBJ6HeYdeuKbVwqJe2aAweZm3WVdTpjhh3xu6fnKN0qnYB3M0wA9URU';
+        }
+        if (empty($new_data['wablas_api_secret'])) {
+            $new_data['wablas_api_secret'] = '9ScrDrmZ';
+        }
+
         //return
         return $new_data;
     }
