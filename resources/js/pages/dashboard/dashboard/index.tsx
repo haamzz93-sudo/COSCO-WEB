@@ -218,16 +218,25 @@ export default function DashboardIndex(props: any) {
     const danaDicairkan = Number(rt.dana_dicairkan ?? rt.realisasi_cair ?? 0);
 
     // Tracking Matrices
-    const trackingPk = rt.tracking_pk || [];
-    const trackingMemoCair = rt.tracking_memo_cair || [];
-    const [trackingTab, setTrackingTab] = useState<"pk" | "memo">("pk");
+    const trackingMatriks: any[] = rt.tracking_matriks && rt.tracking_matriks.length > 0
+        ? rt.tracking_matriks
+        : (rt.tracking_pk && rt.tracking_pk.length > 0 ? rt.tracking_pk : []);
+
+    const proporsiAnggaran: any[] = rt.proporsi_anggaran && rt.proporsi_anggaran.length > 0
+        ? rt.proporsi_anggaran
+        : [
+            { nama: 'Peningkatan Akses Pendidikan', biaya: 900000000, percent: 45.0, total_kegiatan: 1, color: '#1e40af' },
+            { nama: 'Peningkatan Layanan Pembelajaran', biaya: 759900000, percent: 38.0, total_kegiatan: 8, color: '#f59e0b' },
+            { nama: 'Peningkatan Animo Masyarakat', biaya: 188550000, percent: 9.4, total_kegiatan: 6, color: '#06b6d4' },
+            { nama: 'Peningkatan Kualitas Manajemen', biaya: 53625000, percent: 2.7, total_kegiatan: 4, color: '#8b5cf6' },
+            { nama: 'Penelitian Pengembangan Kearifan Lokal', biaya: 50000000, percent: 2.5, total_kegiatan: 2, color: '#14b8a6' },
+            { nama: 'Pengabdian Pemberdayaan Masyarakat', biaya: 30000000, percent: 1.5, total_kegiatan: 2, color: '#ef4444' },
+            { nama: 'Peningkatan Prestasi Mahasiswa', biaya: 17925000, percent: 0.9, total_kegiatan: 2, color: '#ec4899' },
+        ];
+
     const [trackingScope, setTrackingScope] = useState<"all" | "my">("all");
-
-    const myPkCount = trackingPk.filter((item: any) => Boolean(item.is_my)).length;
-    const filteredPk = trackingScope === "my" ? trackingPk.filter((item: any) => Boolean(item.is_my)) : trackingPk;
-
-    const myMemoCount = trackingMemoCair.filter((item: any) => Boolean(item.is_my)).length;
-    const filteredMemo = trackingScope === "my" ? trackingMemoCair.filter((item: any) => Boolean(item.is_my)) : trackingMemoCair;
+    const myMatriksCount = trackingMatriks.filter((item: any) => Boolean(item.is_my)).length;
+    const filteredMatriks = trackingScope === "my" ? trackingMatriks.filter((item: any) => Boolean(item.is_my)) : trackingMatriks;
 
     // Charts & Activity Data
     const monthlyData: any[] = rt.monthly_data && rt.monthly_data.length > 0 ? rt.monthly_data : [
@@ -566,10 +575,10 @@ export default function DashboardIndex(props: any) {
                         </div>
                     </div>
 
-                    {/* SECTION 3: TABEL MATRIKS VISUALISASI TRACKING */}
+                    {/* SECTION 3: TABEL MATRIKS VISUALISASI TRACKING TERPADU (FORMAT RESMI SPREADSHEET GAMBAR 1) */}
                     <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-md space-y-5">
                         
-                        {/* HEADER TABEL & TAB SWITCHER */}
+                        {/* HEADER TABEL & SCOPE SWITCHER */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div>
                                 <h3 className="text-base font-black text-slate-900 dark:text-white font-heading">
@@ -580,10 +589,9 @@ export default function DashboardIndex(props: any) {
                                 </p>
                             </div>
 
-                            {/* CONTROLS: SCOPE & TAB SWITCHER */}
+                            {/* CONTROLS: SCOPE SWITCHER */}
                             <div className="flex flex-wrap items-center gap-3">
-                                {/* SCOPE SWITCHER (SEMUA vs TUGAS SAYA) */}
-                                {(myPkCount > 0 || myMemoCount > 0 || userRole === "pic") && (
+                                {(myMatriksCount > 0 || userRole === "pic") && (
                                     <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                         <button
                                             type="button"
@@ -594,7 +602,7 @@ export default function DashboardIndex(props: any) {
                                                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                                             }`}
                                         >
-                                            Semua Kegiatan ({trackingTab === "pk" ? trackingPk.length : trackingMemoCair.length})
+                                            Semua Kegiatan ({trackingMatriks.length})
                                         </button>
                                         <button
                                             type="button"
@@ -605,38 +613,10 @@ export default function DashboardIndex(props: any) {
                                                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                                             }`}
                                         >
-                                            Penugasan Saya ({trackingTab === "pk" ? myPkCount : myMemoCount})
+                                            Penugasan Saya ({myMatriksCount})
                                         </button>
                                     </div>
                                 )}
-
-                                {/* TAB SELECTION */}
-                                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                    <button
-                                        type="button"
-                                        onClick={() => setTrackingTab("pk")}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                                            trackingTab === "pk"
-                                                ? "bg-blue-900 text-white shadow-xs"
-                                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                                        }`}
-                                    >
-                                        <Plane className="size-3.5" />
-                                        <span>Grafik Tracking PK</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setTrackingTab("memo")}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                                            trackingTab === "memo"
-                                                ? "bg-blue-900 text-white shadow-xs"
-                                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                                        }`}
-                                    >
-                                        <Receipt className="size-3.5" />
-                                        <span>Grafik Tracking Memo Cair</span>
-                                    </button>
-                                </div>
                             </div>
                         </div>
 
@@ -661,195 +641,183 @@ export default function DashboardIndex(props: any) {
                             </div>
                         </div>
 
-                        {/* TAB 1: GRAFIK TRACKING PK (PERJALANAN DINAS) */}
-                        {trackingTab === "pk" && (
-                            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-                                <table className="w-full text-xs text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gradient-to-r from-blue-950 via-blue-900 to-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider">
-                                            <th className="p-3 border-r border-blue-800/80 w-10 text-center">#</th>
-                                            <th className="p-3 border-r border-blue-800/80 min-w-[140px]">Kegiatan</th>
-                                            <th className="p-3 border-r border-blue-800/80 min-w-[180px]">Item Kegiatan</th>
-                                            <th className="p-3 border-r border-blue-800/80 w-32">PIC</th>
-                                            <th className="p-3 border-r border-blue-800/80 w-32 text-end">Pagu Anggaran</th>
-                                            <th className="p-3 border-r border-blue-800/80 text-center" colSpan={4}>
-                                                Perencanaan TOR RAB
-                                            </th>
-                                            <th className="p-3 border-r border-blue-800/80 text-center" colSpan={2}>
-                                                Realisasi Dana PK
-                                            </th>
-                                            <th className="p-3 text-center w-28">Status Akhir</th>
+                        {/* TABEL TERPADU (FORMAT RESMI SPREADSHEET GAMBAR 1) */}
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                            <table className="w-full text-xs text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-blue-950 via-blue-900 to-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider text-center">
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 w-10 text-center">#</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 min-w-[150px] text-left">Kegiatan</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 min-w-[190px] text-left">Item Kegiatan</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 w-36 text-left">PIC</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 w-32 text-end">Pagu Anggaran</th>
+                                        <th colSpan={3} className="p-2.5 border-r border-blue-800/80 text-center">Perencanaan TOR RAB</th>
+                                        <th colSpan={1} className="p-2.5 border-r border-blue-800/80 text-center">PK</th>
+                                        <th colSpan={1} className="p-2.5 border-r border-blue-800/80 text-center">Memo Cair</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 text-center w-28">SPJ</th>
+                                        <th rowSpan={2} className="p-3 border-r border-blue-800/80 text-center w-28">Pencairan Dana</th>
+                                        <th rowSpan={2} className="p-3 text-center w-24">Status Akhir</th>
+                                    </tr>
+                                    <tr className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 text-center">
+                                        <th className="p-2 border-r border-slate-200 dark:border-slate-700">Create TOR RAB</th>
+                                        <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review Koordinator</th>
+                                        <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review Wadek II</th>
+                                        <th className="p-2 border-r border-slate-200 dark:border-slate-700">Sub Kor Non Akademik</th>
+                                        <th className="p-2 border-r border-slate-200 dark:border-slate-700">Sub Kor Non Akademik</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
+                                    {filteredMatriks.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={12} className="text-center py-8 text-slate-400 text-xs">
+                                                Tidak ada data kegiatan pada tahun {selectedYear}.
+                                            </td>
                                         </tr>
-                                        <tr className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 text-center">
-                                            <th colSpan={5} className="border-r border-slate-200 dark:border-slate-700" />
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Create TOR RAB</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review Koordinator</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review Wadek II</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review Sub Koor</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Pembayaran Bendahara</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Review & Validasi SPJ</th>
-                                            <th className="p-2" />
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
-                                        {filteredPk.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={12} className="text-center py-8 text-slate-400 text-xs">
-                                                    Tidak ada data kegiatan perjalanan dinas pada tahun {selectedYear}.
+                                    ) : (
+                                        filteredMatriks.map((item: any, idx: number) => (
+                                            <tr key={`tmatriks-${item.id}-${idx}`} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${item.is_my ? "bg-blue-50/40 dark:bg-blue-950/20" : ""}`}>
+                                                <td className="p-3 text-center font-mono font-bold text-slate-400 border-r border-slate-200 dark:border-slate-800">
+                                                    {idx + 1}
+                                                </td>
+                                                <td className="p-3 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white">
+                                                    {item.kegiatan}
+                                                </td>
+                                                <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                                                    {item.item_kegiatan}
+                                                </td>
+                                                <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span>{item.pic}</span>
+                                                        {item.is_my && (
+                                                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300 dark:bg-blue-950 dark:text-blue-300">
+                                                                Anda
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-end font-mono font-bold text-slate-900 dark:text-slate-100">
+                                                    <NumericFormat value={item.pagu} displayType="text" decimalScale={0} thousandSeparator="," prefix="Rp " />
+                                                </td>
+                                                {/* PERENCANAAN TOR RAB */}
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.tor_create, item.tor_create === "selesai" ? "Diajukan" : item.tor_create === "review" ? "Draft" : "-")}
+                                                </td>
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.tor_koor, item.tor_koor === "selesai" ? "ACC Koor" : item.tor_koor === "revisi" ? "Revisi" : item.tor_koor === "review" ? "Review" : "-")}
+                                                </td>
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.tor_wadek, item.tor_wadek === "selesai" ? "ACC Wadek" : item.tor_wadek === "revisi" ? "Revisi" : item.tor_wadek === "review" ? "Review" : "-")}
+                                                </td>
+                                                {/* PK (SUB KOR NON AKADEMIK) */}
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.pk_subkor || "belum", item.pk_subkor === "selesai" ? "ACC Subkor" : item.pk_subkor === "revisi" ? "Revisi" : item.pk_subkor === "review" ? "Review" : "-")}
+                                                </td>
+                                                {/* MEMO CAIR (SUB KOR NON AKADEMIK) */}
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.memo_subkor || "belum", item.memo_subkor === "selesai" ? "ACC Cair" : item.memo_subkor === "revisi" ? "Revisi" : item.memo_subkor === "review" ? "Review" : "-")}
+                                                </td>
+                                                {/* SPJ */}
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.spj || "belum", item.spj === "selesai" ? "ACC SPJ" : item.spj === "revisi" ? "Revisi" : item.spj === "review" ? "Review" : "-")}
+                                                </td>
+                                                {/* PENCAIRAN DANA */}
+                                                <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
+                                                    {renderMilestoneBadge(item.pencairan || "belum", item.pencairan === "selesai" ? "Dibayarkan" : item.pencairan === "review" ? "Proses" : "-")}
+                                                </td>
+                                                {/* STATUS AKHIR */}
+                                                <td className="p-2.5 text-center">
+                                                    {renderMilestoneBadge(item.status_akhir, item.status_akhir === "selesai" ? "Selesai" : item.status_akhir === "revisi" ? "Revisi" : item.status_akhir === "review" ? "Proses" : "Draft")}
                                                 </td>
                                             </tr>
-                                        ) : (
-                                            filteredPk.map((item: any, idx: number) => (
-                                                <tr key={`tpk-${item.id}-${idx}`} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${item.is_my ? "bg-blue-50/40 dark:bg-blue-950/20" : ""}`}>
-
-                                                    <td className="p-3 text-center font-mono font-bold text-slate-400 border-r border-slate-200 dark:border-slate-800">
-                                                        {idx + 1}
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white">
-                                                        {item.kegiatan}
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                                                        {item.item_kegiatan}
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span>{item.pic}</span>
-                                                            {item.is_my && (
-                                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300 dark:bg-blue-950 dark:text-blue-300">
-                                                                    Anda
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-end font-mono font-bold text-slate-900 dark:text-slate-100">
-                                                        <NumericFormat value={item.pagu} displayType="text" decimalScale={0} thousandSeparator="," prefix="Rp " />
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_create, item.tor_create === "selesai" ? "Diajukan" : "Draft")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_koor, item.tor_koor === "selesai" ? "ACC Koor" : item.tor_koor === "revisi" ? "Revisi" : item.tor_koor === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_wadek, item.tor_wadek === "selesai" ? "ACC Wadek" : item.tor_wadek === "revisi" ? "Revisi" : item.tor_wadek === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_subkor || "belum", item.tor_subkor === "selesai" ? "ACC Subkor" : item.tor_subkor === "revisi" ? "Revisi" : item.tor_subkor === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.pk_bayar, item.pk_bayar === "selesai" ? "Dibayarkan" : item.pk_bayar === "review" ? "Proses" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.pk_validasi, item.pk_validasi === "selesai" ? "Valid" : item.pk_validasi === "revisi" ? "Revisi" : item.pk_validasi === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center">
-                                                        {renderMilestoneBadge(item.status_akhir, item.status_akhir === "selesai" ? "Selesai" : item.status_akhir === "revisi" ? "Revisi" : item.status_akhir === "review" ? "Proses" : "Draft")}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {/* TAB 2: GRAFIK TRACKING MEMO CAIR (OPERASIONAL / TAHAP SUB KOR DIHAPUS) */}
-                        {trackingTab === "memo" && (
-                            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
-                                <table className="w-full text-xs text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gradient-to-r from-blue-950 via-blue-900 to-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider">
-                                            <th className="p-3 border-r border-blue-800/80 w-10 text-center">#</th>
-                                            <th className="p-3 border-r border-blue-800/80 min-w-[220px]">Kegiatan & Sub-Kegiatan</th>
-                                            <th className="p-3 border-r border-blue-800/80 w-36">PIC</th>
-                                            <th className="p-3 border-r border-blue-800/80 w-32 text-end">Pagu Anggaran</th>
-                                            <th className="p-3 border-r border-blue-800/80 text-center" colSpan={2}>
-                                                Perencanaan TOR
-                                            </th>
-                                            <th className="p-3 border-r border-blue-800/80 text-center" colSpan={3}>
-                                                Realisasi Memo Cair
-                                            </th>
-                                            <th className="p-3 border-r border-blue-800/80 text-center w-24">SPJ</th>
-                                            <th className="p-3 text-center w-28">Status Akhir</th>
-                                        </tr>
-                                        <tr className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 text-center">
-                                            <th colSpan={4} className="border-r border-slate-200 dark:border-slate-700" />
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Koordinator</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Wakil Dekan</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Pengajuan</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Validasi Cair</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Pembayaran</th>
-                                            <th className="p-2 border-r border-slate-200 dark:border-slate-700">Status SPJ</th>
-                                            <th className="p-2" />
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
-                                        {filteredMemo.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={11} className="text-center py-8 text-slate-400 text-xs">
-                                                    Tidak ada data kegiatan memo cair pada tahun {selectedYear}.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filteredMemo.map((item: any, idx: number) => (
-                                                <tr key={`tmc-${item.id}-${idx}`} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${item.is_my ? "bg-blue-50/40 dark:bg-blue-950/20" : ""}`}>
-
-                                                    <td className="p-3 text-center font-mono font-bold text-slate-400 border-r border-slate-200 dark:border-slate-800">
-                                                        {idx + 1}
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800">
-                                                        <span className="font-bold text-slate-900 dark:text-white block">
-                                                            {item.item_kegiatan}
-                                                        </span>
-                                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                                                            {item.kegiatan}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span>{item.pic}</span>
-                                                            {item.is_my && (
-                                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300 dark:bg-blue-950 dark:text-blue-300">
-                                                                    Anda
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3 border-r border-slate-200 dark:border-slate-800 text-end font-mono font-bold text-slate-900 dark:text-slate-100">
-                                                        <NumericFormat value={item.pagu} displayType="text" decimalScale={0} thousandSeparator="," prefix="Rp " />
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_koor, item.tor_koor === "selesai" ? "ACC Koor" : item.tor_koor === "revisi" ? "Revisi" : item.tor_koor === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.tor_wadek, item.tor_wadek === "selesai" ? "ACC Wadek" : item.tor_wadek === "revisi" ? "Revisi" : item.tor_wadek === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.memo_pengajuan, item.memo_pengajuan === "selesai" ? "Diajukan" : "Draft")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.memo_validasi, item.memo_validasi === "selesai" ? "ACC Cair" : item.memo_validasi === "revisi" ? "Revisi" : item.memo_validasi === "review" ? "Review" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.memo_bayar, item.memo_bayar === "selesai" ? "Dibayarkan" : item.memo_bayar === "review" ? "Proses" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center border-r border-slate-200 dark:border-slate-800">
-                                                        {renderMilestoneBadge(item.memo_spj, item.memo_spj === "selesai" ? "ACC SPJ" : item.memo_spj === "review" ? "Review SPJ" : "Belum")}
-                                                    </td>
-                                                    <td className="p-2.5 text-center">
-                                                        {renderMilestoneBadge(item.status_akhir, item.status_akhir === "selesai" ? "Lunas" : item.status_akhir === "revisi" ? "Revisi" : item.status_akhir === "review" ? "Proses" : "Draft")}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    {/* SECTION 4: DUA GRAFIK INTERAKTIF REALTIME (GRAFIK TREN & DISTRIBUSI PRODI) */}
+                    {/* SECTION 4: GRAFIK ANALITIK REALTIME & PROPORSI ALOKASI ANGGARAN (GAMBAR 2 PAK DARMAWAN) */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        
+                        {/* GRAFIK 0: DIAGRAM LINGKARAN PROPORSI ALOKASI ANGGARAN (PERSIS GAMBAR 2 DOSEN) (5 Cols) */}
+                        <div className="lg:col-span-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-6 shadow-md space-y-4">
+                            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                                <div className="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-black tracking-wide shadow-xs font-heading">
+                                    Proporsi Alokasi Anggaran
+                                </div>
+                                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    Realtime
+                                </span>
+                            </div>
+
+                            {/* SVG DONUT CHART RING WITH CENTER TOTAL */}
+                            {(() => {
+                                const totalPaguProporsi = proporsiAnggaran.reduce((acc: number, cur: any) => acc + (Number(cur.biaya) || 0), 0) || (paguAnggaran > 0 ? paguAnggaran : 2000000000);
+                                const r = 70;
+                                const c = 2 * Math.PI * r; // ~439.82
+                                let cumulativePct = 0;
+
+                                return (
+                                    <div className="space-y-4">
+                                        <div className="relative flex justify-center items-center py-2">
+                                            <div className="relative size-[230px] flex items-center justify-center">
+                                                <svg viewBox="0 0 200 200" className="size-full -rotate-90">
+                                                    {proporsiAnggaran.map((item: any, idx: number) => {
+                                                        const strokeDash = (Math.max(0.5, item.percent) / 100) * c;
+                                                        const strokeOffset = -(cumulativePct / 100) * c;
+                                                        cumulativePct += item.percent;
+                                                        return (
+                                                            <circle
+                                                                key={`donut-slice-${idx}`}
+                                                                cx="100"
+                                                                cy="100"
+                                                                r={r}
+                                                                fill="transparent"
+                                                                stroke={item.color || "#1e40af"}
+                                                                strokeWidth="30"
+                                                                strokeDasharray={`${strokeDash} ${c - strokeDash}`}
+                                                                strokeDashoffset={strokeOffset}
+                                                                className="transition-all duration-500 hover:opacity-90"
+                                                            />
+                                                        );
+                                                    })}
+                                                </svg>
+                                                {/* CENTER TEXT */}
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-2">
+                                                    <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 font-heading leading-tight">Total</span>
+                                                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono tracking-tight my-0.5">
+                                                        <NumericFormat value={totalPaguProporsi} displayType="text" decimalScale={0} thousandSeparator="." prefix="Rp " />
+                                                    </span>
+                                                    <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 font-heading leading-tight">(100%)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* LEGENDA DAFTAR ALOKASI PROGRAM PERSIS GAMBAR 2 */}
+                                        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 max-h-[280px] overflow-y-auto pr-1">
+                                            {proporsiAnggaran.map((item: any, idx: number) => (
+                                                <div key={`proporsi-leg-${idx}`} className="flex items-center justify-between text-xs py-1 border-b border-slate-50 dark:border-slate-800/60 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-1 rounded-lg transition-colors">
+                                                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                                        <span className="size-3 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: item.color }} />
+                                                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate" title={item.nama}>
+                                                            {item.nama}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 shrink-0 font-mono text-[11px]">
+                                                        <span className="font-black text-slate-900 dark:text-white">
+                                                            <NumericFormat value={item.biaya} displayType="text" decimalScale={0} thousandSeparator="." prefix="Rp " />
+                                                        </span>
+                                                        <span className="font-bold text-blue-900 dark:text-blue-400 w-14 text-end">
+                                                            ({(item.percent || 0).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
                         
                         {/* GRAFIK 1: LINE CHART TREN PENYERAPAN ANGGARAN REALTIME (7 Cols) */}
                         <div className="lg:col-span-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-6 shadow-md space-y-4">

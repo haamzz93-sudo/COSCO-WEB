@@ -87,21 +87,22 @@ class DashboardController extends Controller
                         // 3. Jumlah Kegiatan (Otomatis Get data dashboard)
             $jumlah_kegiatan = (int) (clone $kegiatanQuery)->count();
 
-            // Total Inventaris Tambahan Nominal (Otomatis sinkron HPS & Belanja Inventaris)
-            $total_inventaris = (float) (clone $kegiatanQuery)
-                ->where(function($q) {
-                    $q->where('kegiatan_details.kategori_kegiatan', 'inventaris')
-                      ->orWhere('kegiatan_details.nama_kegiatan_detail', 'like', '%inventaris%')
-                      ->orWhere('kegiatans.nama_kegiatan', 'like', '%inventaris%');
+            // Total Inventaris Tambahan Nominal (Otomatis sinkron HPS & Belanja Inventaris murni, bukan jasa pemeliharaan)
+            $inventarisFilter = function($q) {
+                $q->where(function($sub) {
+                    $sub->where('kegiatan_details.kategori_kegiatan', 'inventaris')
+                        ->orWhere('kegiatans.nama_kegiatan', 'like', '%belanja inventaris%');
                 })
+                ->where('kegiatan_details.nama_kegiatan_detail', 'not like', '%pemeliharaan%')
+                ->where('kegiatan_details.nama_kegiatan_detail', 'not like', '%jasa%');
+            };
+
+            $total_inventaris = (float) (clone $kegiatanQuery)
+                ->where($inventarisFilter)
                 ->sum('kegiatan_details.biaya');
 
             $jumlah_inventaris = (int) (clone $kegiatanQuery)
-                ->where(function($q) {
-                    $q->where('kegiatan_details.kategori_kegiatan', 'inventaris')
-                      ->orWhere('kegiatan_details.nama_kegiatan_detail', 'like', '%inventaris%')
-                      ->orWhere('kegiatans.nama_kegiatan', 'like', '%inventaris%');
-                })
+                ->where($inventarisFilter)
                 ->count();
 
             // 4. Dana Kegiatan (Otomatis Get data dashboard)
@@ -359,6 +360,7 @@ class DashboardController extends Controller
 
             // Matriks Grafik Tracking Memo Cair (Normal)
             $tracking_memo_cair = [];
+            $tracking_matriks = [];
             foreach ($activitiesList as $item) {
                 $mcRecord = null;
                 if (!empty($item->tor_id)) {
@@ -468,6 +470,117 @@ class DashboardController extends Controller
                     'memo_spj'      => $mcSpjStatus,
                     'status_akhir'  => $mcFinal,
                     'is_my'         => $userId && ((int)$item->pic_kegiatan === (int)$userId),
+                ];
+
+                // Matriks Visualisasi Terpadu (Format Tabel Sesuai Proposal Pak Darmawan)
+                $torCreateUnified = $torCreate;
+                $torKoorUnified = $torKoor;
+                $torWadekUnified = $torWadek;
+                $pkSubkorUnified = $torSubkor; // Sub Kor Non Akademik untuk PK
+                $memoSubkorUnified = $mcValidasi; // Sub Kor Non Akademik untuk Memo Cair
+
+                $spjUnified = 'belum';
+                if ($mcSpjStatus === 'selesai' || $pkValidasi === 'selesai') {
+                    $spjUnified = 'selesai';
+                } elseif ($mcSpjStatus === 'revisi' || $pkValidasi === 'revisi') {
+                    $spjUnified = 'revisi';
+                } elseif ($mcSpjStatus === 'review' || $pkValidasi === 'review') {
+                    $spjUnified = 'review';
+                }
+
+                $cairUnified = 'belum';
+                if ($mcBayar === 'selesai' || $pkBayar === 'selesai') {
+                    $cairUnified = 'selesai';
+                } elseif ($mcBayar === 'review' || $pkBayar === 'review') {
+                    $cairUnified = 'review';
+                }
+
+                $finalUnified = 'belum';
+                if ($spjUnified === 'selesai' || $cairUnified === 'selesai') {
+                    $finalUnified = 'selesai';
+                } elseif ($torKoorUnified === 'revisi' || $torWadekUnified === 'revisi' || $pkSubkorUnified === 'revisi' || $memoSubkorUnified === 'revisi' || $spjUnified === 'revisi') {
+                    $finalUnified = 'revisi';
+                } elseif ($torCreateUnified === 'selesai' || $torKoorUnified === 'review' || $torWadekUnified === 'review' || $pkSubkorUnified === 'review' || $memoSubkorUnified === 'review' || $cairUnified === 'review' || $spjUnified === 'review') {
+                    $finalUnified = 'review';
+                }
+
+                $tracking_matriks[] = [
+                    'id'            => $item->id,
+                    'kegiatan'      => $item->nama_kegiatan,
+                    'item_kegiatan' => $item->nama_kegiatan_detail,
+                    'pic_id'        => $item->pic_kegiatan,
+                    'pic'           => $item->pic_name ?? 'PIC Belum Ditentukan',
+                    'pagu'          => (float) $item->biaya,
+                    'tor_create'    => $torCreateUnified,
+                    'tor_koor'      => $torKoorUnified,
+                    'tor_wadek'     => $torWadekUnified,
+                    'pk_subkor'     => $pkSubkorUnified,
+                    'memo_subkor'   => $memoSubkorUnified,
+                    'spj'           => $spjUnified,
+                    'pencairan'     => $cairUnified,
+                    'status_akhir'  => $finalUnified,
+                    'is_my'         => $userId && ((int)$item->pic_kegiatan === (int)$userId),
+                ];
+            }
+
+            // 4.5. Proporsi Alokasi Anggaran Realtime (Diagram Lingkaran / Donut Chart)
+            $proporsiQuery = DB::table('kegiatans')
+                ->leftJoin('kegiatan_details', 'kegiatans.id', '=', 'kegiatan_details.kegiatan_id')
+                ->where('kegiatans.tahun', $tahun);
+
+            if ($isPICOnly) {
+                $proporsiQuery->where('kegiatan_details.pic_kegiatan', $userId);
+            }
+
+            $rawProporsi = $proporsiQuery
+                ->select(
+                    'kegiatans.nama_kegiatan',
+                    DB::raw('COALESCE(SUM(kegiatan_details.biaya), 0) as total_biaya'),
+                    DB::raw('COUNT(kegiatan_details.id) as total_kegiatan')
+                )
+                ->groupBy('kegiatans.id', 'kegiatans.nama_kegiatan')
+                ->having('total_biaya', '>', 0)
+                ->orderBy('total_biaya', 'desc')
+                ->get();
+
+            $totalNominalProporsi = $rawProporsi->sum('total_biaya');
+            $donutPalette = [
+                '#1e40af', // Royal Blue UNS
+                '#f59e0b', // Amber / Gold
+                '#06b6d4', // Sky Blue
+                '#14b8a6', // Teal
+                '#ef4444', // Red
+                '#8b5cf6', // Purple
+                '#ec4899', // Pink
+                '#059669', // Emerald
+                '#6366f1', // Indigo
+                '#d97706', // Warm Gold
+            ];
+
+            $proporsi_anggaran = [];
+            if ($rawProporsi->count() > 0 && $totalNominalProporsi > 0) {
+                $calcPaguRef = $pagu_anggaran > 0 ? $pagu_anggaran : $totalNominalProporsi;
+                foreach ($rawProporsi as $idx => $pItem) {
+                    $nominal = (float)$pItem->total_biaya;
+                    $pct = $calcPaguRef > 0 ? round(($nominal / $calcPaguRef) * 100, 1) : 0;
+                    $proporsi_anggaran[] = [
+                        'nama'           => $pItem->nama_kegiatan,
+                        'biaya'          => $nominal,
+                        'percent'        => $pct,
+                        'total_kegiatan' => (int)$pItem->total_kegiatan,
+                        'color'          => $donutPalette[$idx % count($donutPalette)]
+                    ];
+                }
+            } else {
+                // Fallback representasi standar dokumen proposal
+                $proporsi_anggaran = [
+                    ['nama' => 'Peningkatan Akses Pendidikan', 'biaya' => 900000000, 'percent' => 45.0, 'total_kegiatan' => 1, 'color' => '#1e40af'],
+                    ['nama' => 'Peningkatan Layanan Pembelajaran', 'biaya' => 759900000, 'percent' => 38.0, 'total_kegiatan' => 8, 'color' => '#f59e0b'],
+                    ['nama' => 'Peningkatan Animo Masyarakat', 'biaya' => 188550000, 'percent' => 9.4, 'total_kegiatan' => 6, 'color' => '#06b6d4'],
+                    ['nama' => 'Peningkatan Kualitas Manajemen', 'biaya' => 53625000, 'percent' => 2.7, 'total_kegiatan' => 4, 'color' => '#8b5cf6'],
+                    ['nama' => 'Penelitian Pengembangan Kearifan Lokal', 'biaya' => 50000000, 'percent' => 2.5, 'total_kegiatan' => 2, 'color' => '#14b8a6'],
+                    ['nama' => 'Pengabdian Pemberdayaan Masyarakat', 'biaya' => 30000000, 'percent' => 1.5, 'total_kegiatan' => 2, 'color' => '#ef4444'],
+                    ['nama' => 'Peningkatan Prestasi Mahasiswa', 'biaya' => 17925000, 'percent' => 0.9, 'total_kegiatan' => 2, 'color' => '#ec4899'],
                 ];
             }
 
@@ -640,6 +753,8 @@ class DashboardController extends Controller
                     'review_count' => $review_count,
 
                     // Tracking Matrices & Charts
+                    'tracking_matriks' => $tracking_matriks,
+                    'proporsi_anggaran' => $proporsi_anggaran,
                     'tracking_pk' => $tracking_pk,
                     'tracking_memo_cair' => $tracking_memo_cair,
                     'prodi_data' => $prodi_data,
@@ -675,6 +790,8 @@ class DashboardController extends Controller
                     'total_prodi' => 0,
                     'disetujui_count' => 0,
                     'review_count' => 0,
+                    'tracking_matriks' => [],
+                    'proporsi_anggaran' => [],
                     'tracking_pk' => [],
                     'tracking_memo_cair' => [],
                     'prodi_data' => [],
