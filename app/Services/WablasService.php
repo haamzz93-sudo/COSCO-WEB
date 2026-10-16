@@ -215,11 +215,19 @@ class WablasService
      */
     public static function prepareMessage(array $replacements, string $template)
     {
-        $new_replacements = array_merge($replacements, [
-            '{AKSES_CEPAT_COSCO}' => 'https://cosco.unsmadiun.id'
-        ]);
+        $link = 'https://cosco.unsmadiun.id';
+        $expanded = [];
+        foreach ($replacements as $k => $v) {
+            $expanded[$k] = $v;
+            $expanded[strtoupper($k)] = $v;
+            $expanded[strtolower($k)] = $v;
+        }
+        $expanded['{AKSES_CEPAT_COSCO}'] = $link;
+        $expanded['{link_sistem}'] = $link;
+        $expanded['{LINK_SISTEM}'] = $link;
+        $expanded['{akses_cepat_cosco}'] = $link;
 
-        return str_replace(array_keys($new_replacements), array_values($new_replacements), $template);
+        return str_replace(array_keys($expanded), array_values($expanded), $template);
     }
     
 
@@ -414,11 +422,16 @@ class WablasService
         // SUCCESS
         $pengaturan=PengaturanRepo::gets();
 
-        $template = $pengaturan['approve_tor_koordinator'];
+        $template = $pengaturan['approve_tor_koordinator'] ?? "Cosco Super APPS\nKpd Yth. *{PIC_KEGIATAN}*\n\nPemberitahuan: Usulan TOR & RAB kegiatan *{DETAIL_KEGIATAN}* telah DISETUJUI oleh Koordinator Kampus Madiun ({KOORDINATOR}).\nSaat ini usulan telah diteruskan ke Wakil Dekan untuk proses telaah dan pengesahan pimpinan.\n\n*Link {AKSES_CEPAT_COSCO}*";
+        $catatan = $req['catatan_koordinator'] ?? ($tor['catatan_koordinator'] ?? '-');
         $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{KOORDINATOR}'     => $login_data['name']
+            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{nama_pic}'        => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{detail_kegiatan}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{KOORDINATOR}'     => $login_data['name'] ?? 'Koordinator Kampus Madiun',
+            '{CATATAN_REVISI}'  => $catatan,
+            '{catatan_revisi}'  => $catatan
         ];
 
         $message = self::prepareMessage($replacements, $template);
@@ -448,10 +461,15 @@ class WablasService
         $pengaturan=PengaturanRepo::gets();
 
         $template = $pengaturan['revisi_tor_koordinator'];
+        $catatan = $req['catatan_koordinator'] ?? ($tor['catatan_koordinator'] ?? '-');
         $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{KOORDINATOR}'     => $login_data['name']
+            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{nama_pic}'        => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{detail_kegiatan}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{KOORDINATOR}'     => $login_data['name'] ?? 'Koordinator Kampus Madiun',
+            '{CATATAN_REVISI}'  => $catatan,
+            '{catatan_revisi}'  => $catatan
         ];
 
         $message = self::prepareMessage($replacements, $template);
@@ -481,10 +499,15 @@ class WablasService
         $pengaturan=PengaturanRepo::gets();
 
         $template = $pengaturan['approve_tor_wd'];
+        $catatan = $req['catatan_wakil_dekan'] ?? ($tor['catatan_wakil_dekan'] ?? '-');
         $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{WAKIL_DEKAN}'     => $login_data['name']
+            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{nama_pic}'        => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{detail_kegiatan}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{WAKIL_DEKAN}'     => $login_data['name'] ?? 'Wakil Dekan',
+            '{CATATAN_REVISI}'  => $catatan,
+            '{catatan_revisi}'  => $catatan
         ];
 
         $message = self::prepareMessage($replacements, $template);
@@ -514,10 +537,15 @@ class WablasService
         $pengaturan=PengaturanRepo::gets();
 
         $template = $pengaturan['revisi_tor_wd'];
+        $catatan = $req['catatan_wakil_dekan'] ?? ($tor['catatan_wakil_dekan'] ?? '-');
         $replacements=[
-            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'],
-            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'],
-            '{WAKIL_DEKAN}'     => $login_data['name']
+            '{PIC_KEGIATAN}'    => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{nama_pic}'        => $tor['kegiatan_detail']['user_pic_kegiatan']['name'] ?? 'PIC Kegiatan',
+            '{DETAIL_KEGIATAN}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{detail_kegiatan}' => $tor['kegiatan_detail']['nama_kegiatan_detail'] ?? ($tor['judul_kegiatan'] ?? 'Kegiatan'),
+            '{WAKIL_DEKAN}'     => $login_data['name'] ?? 'Wakil Dekan',
+            '{CATATAN_REVISI}'  => $catatan,
+            '{catatan_revisi}'  => $catatan
         ];
 
         $message = self::prepareMessage($replacements, $template);
@@ -1365,27 +1393,27 @@ class WablasService
             // Target phone based on stage
             $targetPhones = [];
             if (in_array($triggerKey, ['hps_submit_pic'])) {
-                // To Koordinator
-                $koors = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%koordinator%'))->get();
+                // To Koordinator Madiun
+                $koors = User::get()->filter(fn($u) => $u->hasPermission("specific_is_user_koordinator") || $u->hasPermission("tor_koordinator_validasi") || stripos($u->role, 'koordinator') !== false);
                 foreach ($koors as $k) {
                     if (!empty($k->no_wa)) $targetPhones[] = $k->no_wa;
                 }
             } elseif (in_array($triggerKey, ['hps_approve_koordinator'])) {
                 // To Pejabat Pengadaan (PP)
-                $pps = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%pengadaan%'))->get();
+                $pps = User::get()->filter(fn($u) => $u->hasPermission("specific_is_user_pp") || $u->hasPermission("tor_pp_validasi") || stripos($u->role, 'pengadaan') !== false);
                 foreach ($pps as $p) {
                     if (!empty($p->no_wa)) $targetPhones[] = $p->no_wa;
                 }
             } elseif (in_array($triggerKey, ['hps_approve_pp'])) {
                 // To Wakil Dekan II
-                $wds = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%dekan%'))->get();
+                $wds = User::get()->filter(fn($u) => $u->hasPermission("specific_is_user_wakil_dekan") || $u->hasPermission("specific_wakil_dekan") || stripos($u->role, 'dekan') !== false);
                 foreach ($wds as $w) {
                     if (!empty($w->no_wa)) $targetPhones[] = $w->no_wa;
                 }
             } elseif (in_array($triggerKey, ['hps_approve_wd'])) {
                 // To PP and PIC
                 if (!empty($picPhone)) $targetPhones[] = $picPhone;
-                $pps = User::whereHas('roles', fn($q) => $q->where('name', 'like', '%pengadaan%'))->get();
+                $pps = User::get()->filter(fn($u) => $u->hasPermission("specific_is_user_pp") || $u->hasPermission("tor_pp_validasi") || stripos($u->role, 'pengadaan') !== false);
                 foreach ($pps as $p) {
                     if (!empty($p->no_wa)) $targetPhones[] = $p->no_wa;
                 }

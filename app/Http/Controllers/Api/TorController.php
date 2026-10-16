@@ -601,7 +601,11 @@ class TorController extends Controller
         
         //jobs
         $wablas = new WablasService();
-        $result = $wablas->send_submit_tor_to_koordinator($request, $tor_id);
+        if ($is_hps) {
+            $wablas->send_hps_notification('hps_submit_pic', $id_data['kegiatan_detail_id'] ?? $id);
+        } else {
+            $result = $wablas->send_submit_tor_to_koordinator($request, $id);
+        }
 
         return response()->json([
             'status'=>"ok"
@@ -670,13 +674,21 @@ class TorController extends Controller
         
         //jobs
         $wablas = new WablasService();
-        if($req['status_ajuan']=="koordinator_applied"){
-            // Langsung ajukan ke Wakil Dekan (melewati Sub Kor) dan notifikasi ke PIC
-            $result = $wablas->send_submit_tor_to_wd($request, $id);
-            $result = $wablas->send_approve_tor_koordinator($request, $id);
-        }
-        else{
-            $result = $wablas->send_revisi_tor_koordinator($request, $id);
+        $is_hps = in_array(strtolower($id_data->kegiatan_detail->kategori_kegiatan ?? ''), ['bhp', 'inventaris']);
+        if ($is_hps) {
+            if ($req['status_ajuan'] == "koordinator_applied") {
+                $wablas->send_hps_notification('hps_approve_koordinator', $id_data->kegiatan_detail_id);
+            } else {
+                $wablas->send_hps_notification('hps_revisi_koordinator', $id_data->kegiatan_detail_id, ['catatan_revisi' => $req['catatan_koordinator'] ?? '-']);
+            }
+        } else {
+            if ($req['status_ajuan'] == "koordinator_applied") {
+                // Langsung ajukan ke Wakil Dekan (melewati Sub Kor) dan notifikasi ke PIC
+                $result = $wablas->send_submit_tor_to_wd($request, $id);
+                $result = $wablas->send_approve_tor_koordinator($request, $id);
+            } else {
+                $result = $wablas->send_revisi_tor_koordinator($request, $id);
+            }
         }
 
         return response()->json([
@@ -846,11 +858,19 @@ class TorController extends Controller
         
         //jobs
         $wablas = new WablasService();
-        if($req['status_ajuan']=="wakil_dekan_applied"){
-            $result = $wablas->send_approve_tor_wd($request, $id);
-        }
-        else{
-            $result = $wablas->send_revisi_tor_wd($request, $id);
+        $is_hps = in_array(strtolower($id_data->kegiatan_detail->kategori_kegiatan ?? ''), ['bhp', 'inventaris']);
+        if ($is_hps) {
+            if ($req['status_ajuan'] == "wakil_dekan_applied") {
+                $wablas->send_hps_notification('hps_approve_wd', $id_data->kegiatan_detail_id);
+            } else {
+                $wablas->send_hps_notification('hps_revisi_wd', $id_data->kegiatan_detail_id, ['catatan_revisi' => $req['catatan_wakil_dekan'] ?? '-']);
+            }
+        } else {
+            if ($req['status_ajuan'] == "wakil_dekan_applied") {
+                $result = $wablas->send_approve_tor_wd($request, $id);
+            } else {
+                $result = $wablas->send_revisi_tor_wd($request, $id);
+            }
         }
 
         return response()->json([
@@ -910,6 +930,14 @@ class TorController extends Controller
             TorModel::find($id)->update($data_update);
         });
 
+        // jobs
+        $wablas = new WablasService();
+        if ($req['status_ajuan'] == "pp_applied") {
+            $wablas->send_hps_notification('hps_approve_pp', $id_data->kegiatan_detail_id);
+        } else {
+            $wablas->send_hps_notification('hps_revisi_pp', $id_data->kegiatan_detail_id, ['catatan_revisi' => $req['catatan_pp'] ?? '-']);
+        }
+
         return response()->json([
             'status' => "ok",
             'message' => "Validasi HPS oleh Pejabat Pengadaan berhasil diproses."
@@ -935,6 +963,10 @@ class TorController extends Controller
         $id_data->update([
             'status_pengadaan' => 'proses_pengadaan'
         ]);
+
+        // jobs
+        $wablas = new WablasService();
+        $wablas->send_hps_notification('hps_proses_pengadaan', $id_data->kegiatan_detail_id);
 
         return response()->json([
             'status' => "ok",
