@@ -48,6 +48,16 @@ class SendWablasJob implements ShouldQueue
             return;
         }
 
+        // Mode Testing Sementara: jika WABLAS_TEST_PHONE diatur di .env, semua pesan dialihkan ke nomor testing
+        $testPhone = env('WABLAS_TEST_PHONE');
+        if (!empty($testPhone)) {
+            foreach ($this->messages as &$msg) {
+                $msg['phone'] = $testPhone;
+            }
+            unset($msg);
+            Log::info("SendWablasJob: Testing mode active. All messages routed to {$testPhone}");
+        }
+
         Log::info('SendWablasJob diproses', [
             'total' => count($this->messages),
             'phones' => array_column($this->messages, 'phone')
@@ -74,7 +84,5 @@ class SendWablasJob implements ShouldQueue
             'error' => $exception->getMessage(),
             'total' => count($this->messages)
         ]);
-
-        // Opsional: kirim notifikasi ke admin
     }
 }
