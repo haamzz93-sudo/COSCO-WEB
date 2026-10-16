@@ -1417,6 +1417,17 @@ class WablasService
                 foreach ($pps as $p) {
                     if (!empty($p->no_wa)) $targetPhones[] = $p->no_wa;
                 }
+            } elseif (in_array($triggerKey, ['hps_selesai_final'])) {
+                // To PIC dan Koordinator Kampus Madiun (Manajemen)
+                if (!empty($picPhone)) $targetPhones[] = $picPhone;
+                $koors = User::get()->filter(fn($u) => $u->hasPermission("specific_is_user_koordinator") || $u->hasPermission("tor_koordinator_validasi") || stripos($u->role, 'koordinator') !== false);
+                foreach ($koors as $k) {
+                    if (!empty($k->no_wa)) $targetPhones[] = $k->no_wa;
+                }
+            } elseif (in_array($triggerKey, ['hps_upload_bast_pp'])) {
+                // CATATAN SARPRAS: Tahap 9 sementara diskip menunggu code group WhatsApp Sarpras.
+                // Disiapkan untuk integrasi group_id Wablas di masa mendatang saat kode grup diberikan.
+                if (!empty($picPhone)) $targetPhones[] = $picPhone;
             } else {
                 // To PIC
                 if (!empty($picPhone)) $targetPhones[] = $picPhone;

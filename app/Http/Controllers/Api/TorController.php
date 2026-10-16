@@ -1026,6 +1026,15 @@ class TorController extends Controller
 
         $id_data->update($data_update);
 
+        // Notifikasi WhatsApp Alur HPS
+        $wablas = new WablasService();
+        // CATATAN SARPRAS: Tahap 9 (hps_upload_bast_pp) sementara diskip sesuai instruksi 
+        // menunggu tersedianya kode group WhatsApp Sarpras. Kode tetap dipertahankan agar siap diaktifkan saat group_id tersedia.
+        // $wablas->send_hps_notification('hps_upload_bast_pp', $id_data->kegiatan_detail_id ?? $id); // PENDING: Menunggu Code Group Sarpras
+
+        // Langsung eksekusi Tahap 10: Pengadaan Selesai Tuntas 100% ke Pengguna Real
+        $wablas->send_hps_notification('hps_selesai_final', $id_data->kegiatan_detail_id ?? $id);
+
         return response()->json([
             'status' => "ok",
             'message' => "Dokumen BAST pengadaan berhasil diunggah. Pengadaan tuntas 100%.",
