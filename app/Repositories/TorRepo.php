@@ -95,6 +95,19 @@ class TorRepo
             });
         }
 
+        // 6b. Filter Status Pengadaan (PBJ)
+        $status_pengadaan = isset($params['status_pengadaan']) ? $params['status_pengadaan'] : '';
+        if (!empty($status_pengadaan)) {
+            if (is_array($status_pengadaan)) {
+                $query->whereIn('status_pengadaan', $status_pengadaan);
+            } elseif (str_contains($status_pengadaan, ',')) {
+                $statuses = array_map('trim', explode(',', $status_pengadaan));
+                $query->whereIn('status_pengadaan', $statuses);
+            } else {
+                $query->where('status_pengadaan', $status_pengadaan);
+            }
+        }
+
         // 7. Filter Kategori Kegiatan (Inventaris & BHP untuk Pejabat Pengadaan)
         $kategori = isset($params['kategori']) ? trim((string)$params['kategori']) : '';
         if (!empty($kategori)) {
