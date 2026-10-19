@@ -22,14 +22,16 @@ import {
     Receipt,
     Luggage, 
     Search, 
-    ShieldCheck,
-    CheckCircle2,
-    XCircle,
-    FileText,
-    Check,
-    X,
-    Clock,
-    Banknote
+    ShieldCheck, 
+    CheckCircle2, 
+    XCircle, 
+    FileText, 
+    Check, 
+    X, 
+    Clock, 
+    Banknote,
+    ListChecks,
+    AlertCircle
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { NumericFormat } from 'react-number-format'
@@ -74,7 +76,9 @@ export default function PersetujuanMemoCair(props: any) {
         q: "",
         program_studi_id: "",
         tahun: String(new Date().getFullYear() || "2026"),
-        status_ajuan: isBendaharaMode ? "bendahara_all" : (isValidasiSpjMode ? "keuangan_applied" : "sent,keuangan_applied,keuangan_rejected,terbayar")
+        status_ajuan: isBendaharaMode ? "bendahara_all" : (isValidasiSpjMode ? "keuangan_applied" : "sent,keuangan_applied,keuangan_rejected,terbayar"),
+        status_spj: isValidasiSpjMode ? "sent" : "",
+        is_validasi_spj: isValidasiSpjMode ? true : false
     })
 
     const [modalBayar, setModalBayar] = useState<{
@@ -481,6 +485,39 @@ const TableContent = (props: any) => {
     })
 
     const statusBadge = (status: string, itemObj?: any) => {
+        if (isValidasiSpjMode) {
+            const spjStatus = itemObj?.status_spj || status || "sent";
+            if (spjStatus === "sent") {
+                return (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-900 border border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 inline-flex items-center gap-1.5 shadow-2xs">
+                        <span className="size-2 rounded-full bg-blue-600 animate-pulse"></span>
+                        <span>Perlu Validasi SPJ</span>
+                    </span>
+                );
+            }
+            if (spjStatus === "keuangan_applied") {
+                return (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 inline-flex items-center gap-1.5 shadow-2xs">
+                        <CheckCircle2 className="size-3.5 text-emerald-600" />
+                        <span>SPJ Valid (Disetujui)</span>
+                    </span>
+                );
+            }
+            if (spjStatus === "keuangan_revisi") {
+                return (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-900 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 inline-flex items-center gap-1.5 shadow-2xs" title={itemObj?.catatan_keuangan_spj || ""}>
+                        <AlertCircle className="size-3.5 text-rose-600" />
+                        <span>Revisi SPJ (Perlu Perbaikan)</span>
+                    </span>
+                );
+            }
+            return (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+                    {spjStatus}
+                </span>
+            );
+        }
+
         if (isBendaharaMode) {
             const isTerbayar = status === "terbayar" || itemObj?.status === "terbayar" || itemObj?.status_ajuan === "terbayar"
             const isSpjSelesai = itemObj?.status_spj === "keuangan_applied"
@@ -551,11 +588,65 @@ const TableContent = (props: any) => {
 
     return (
         <>
+            {/* SUB-TABS STATUS SPJ UNTUK VERIFIKATOR SPJ (KONSEP SEPERTI KOORDINATOR & WAKIL DEKAN) */}
+            {isValidasiSpjMode && (
+                <div className="flex flex-wrap items-center gap-2 mb-4 p-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <button
+                        type="button"
+                        onClick={() => props.setFilter({ ...props.filter, status_spj: "sent", page: 1 })}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                            (!props.filter.status_spj || props.filter.status_spj === "sent")
+                                ? "bg-blue-900 text-white shadow-sm"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
+                        }`}
+                    >
+                        <Clock className="size-3.5 text-amber-400 animate-pulse" />
+                        <span>Perlu Validasi SPJ (Menunggu Tindakan)</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => props.setFilter({ ...props.filter, status_spj: "keuangan_applied", page: 1 })}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                            props.filter.status_spj === "keuangan_applied"
+                                ? "bg-emerald-700 text-white shadow-sm"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
+                        }`}
+                    >
+                        <CheckCircle2 className="size-3.5 text-emerald-300" />
+                        <span>Riwayat Disetujui (SPJ Valid)</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => props.setFilter({ ...props.filter, status_spj: "keuangan_revisi", page: 1 })}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                            props.filter.status_spj === "keuangan_revisi"
+                                ? "bg-rose-700 text-white shadow-sm"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
+                        }`}
+                    >
+                        <AlertCircle className="size-3.5 text-rose-300" />
+                        <span>Riwayat Revisi (Perbaikan PIC)</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => props.setFilter({ ...props.filter, status_spj: "all_submitted", page: 1 })}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                            props.filter.status_spj === "all_submitted"
+                                ? "bg-slate-800 text-white shadow-sm"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
+                        }`}
+                    >
+                        <ListChecks className="size-3.5" />
+                        <span>Semua Ajuan SPJ</span>
+                    </button>
+                </div>
+            )}
+
             {/* TOOLBAR */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
-                    {/* HANYA SUPER ADMIN YANG TAMPIL DROPDOWN STATUS */}
-                    {isAdmin && (
+                    {/* HANYA SUPER ADMIN YANG TAMPIL DROPDOWN STATUS AJUAN (JIKA BUKAN VALIDASI SPJ) */}
+                    {isAdmin && !isValidasiSpjMode && (
                         <div className="w-full sm:w-56">
                             <Select
                                 options={isBendaharaMode ? [
@@ -568,7 +659,27 @@ const TableContent = (props: any) => {
                             />
                         </div>
                     )}
-                    <div className="relative w-full sm:w-80">
+                    {/* DROPDOWN FILTER PROGRAM STUDI */}
+                    <div className="w-full sm:w-52">
+                        <Select
+                            options={options_prodi}
+                            value={options_prodi.find((f: any) => f.value === props.filter.program_studi_id) || options_prodi[0]}
+                            onChange={(e: any) => props.setFilter({ ...props.filter, program_studi_id: e?.value ?? "", page: 1 })}
+                            className="text-xs font-bold"
+                            placeholder="Semua Program Studi"
+                        />
+                    </div>
+                    {/* DROPDOWN FILTER TAHUN */}
+                    <div className="w-full sm:w-36">
+                        <Select
+                            options={options_tahun}
+                            value={options_tahun.find(f => f.value === props.filter.tahun) || options_tahun[0]}
+                            onChange={(e: any) => props.setFilter({ ...props.filter, tahun: e?.value ?? "", page: 1 })}
+                            className="text-xs font-bold"
+                            placeholder="Pilih Tahun..."
+                        />
+                    </div>
+                    <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                         <Input
                             placeholder="Cari Kegiatan / PIC..."
@@ -597,7 +708,9 @@ const TableContent = (props: any) => {
                             <TableHead className="w-32 px-3 text-center text-xs font-extrabold text-amber-300 uppercase tracking-wider border-r border-blue-800/80">Memo CAIR</TableHead>
                             <TableHead className="w-36 px-4 text-end text-xs font-extrabold text-amber-300 uppercase tracking-wider border-r border-blue-800/80">Nominal Ajuan Cair</TableHead>
                             <TableHead className="w-40 px-4 text-end text-xs font-extrabold text-emerald-300 uppercase tracking-wider border-r border-blue-800/80">Sisa Pagu yang Bisa Diajukan</TableHead>
-                            <TableHead className="w-44 px-4 text-center text-xs font-extrabold text-blue-100 uppercase tracking-wider border-r border-blue-800/80">Status Verifikasi</TableHead>
+                            <TableHead className="w-44 px-4 text-center text-xs font-extrabold text-blue-100 uppercase tracking-wider border-r border-blue-800/80">
+                                {isValidasiSpjMode ? "Status Validasi SPJ" : "Status Verifikasi"}
+                            </TableHead>
                             <TableHead className="w-44 px-3 text-center text-xs font-extrabold text-blue-100 uppercase tracking-wider">Aksi</TableHead>
                         </TableRow>
                     )}
@@ -731,7 +844,7 @@ const TableContent = (props: any) => {
 
                                         {/* STATUS VERIFIKASI */}
                                         <TableCell className="px-4 py-4 text-center align-middle border-r border-slate-200/70 dark:border-slate-800">
-                                            {statusBadge(item.status_ajuan, item)}
+                                            {statusBadge(isValidasiSpjMode ? item.status_spj : item.status_ajuan, item)}
                                         </TableCell>
 
                                         {/* AKSI */}
@@ -795,11 +908,17 @@ const TableContent = (props: any) => {
                                                     <Button 
                                                         asChild 
                                                         size="sm" 
-                                                        className="h-8 px-3.5 rounded-lg bg-blue-950 hover:bg-blue-900 text-white font-bold text-xs shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                                        className={`h-8 px-3.5 rounded-lg font-bold text-xs shadow-xs inline-flex items-center gap-1.5 cursor-pointer ${
+                                                            item.status_spj === "sent" 
+                                                                ? "bg-blue-950 hover:bg-blue-900 text-white" 
+                                                                : (item.status_spj === "keuangan_applied" 
+                                                                    ? "bg-emerald-800 hover:bg-emerald-900 text-white" 
+                                                                    : "bg-rose-800 hover:bg-rose-900 text-white")
+                                                        }`}
                                                     >
-                                                        <Link href={`/dashboard/spjs/detail/${item.id}`}>
+                                                        <Link href={`/dashboard/spjs/detail/${item.id}?from=validasi_spj`}>
                                                             <ShieldCheck className="size-3.5 text-amber-400" />
-                                                            <span>Validasi SPJ</span>
+                                                            <span>{item.status_spj === "sent" ? "Periksa & Validasi SPJ" : (item.status_spj === "keuangan_applied" ? "Lihat SPJ (Valid)" : "Lihat Revisi SPJ")}</span>
                                                         </Link>
                                                     </Button>
                                                 ) : canValidate(item) ? (

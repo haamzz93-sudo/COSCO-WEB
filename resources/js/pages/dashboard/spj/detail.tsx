@@ -148,14 +148,26 @@ export default function Page() {
                         </Breadcrumb>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs shadow-xs transition-all">
-                            <Link href="/dashboard/spjs" className="flex items-center gap-2">
-                                <ArrowLeft className="size-3.5" />
-                                <span>Kembali ke Daftar</span>
-                            </Link>
-                        </Button>
-                    </div>
+                    {(() => {
+                        const isFromValidasiSpj = typeof window !== 'undefined' && (
+                            window.location.search.includes('from=validasi_spj') ||
+                            auth?.user?.role === 'verifikator_spj' ||
+                            document.referrer.includes('validasi_spj')
+                        );
+                        const backUrl = isFromValidasiSpj ? "/dashboard/memo_cairs/validasi_spj" : "/dashboard/spjs";
+                        const backLabel = isFromValidasiSpj ? "Kembali ke Antrean Validasi SPJ" : "Kembali ke Daftar";
+
+                        return (
+                            <div className="flex items-center gap-2">
+                                <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs shadow-xs transition-all">
+                                    <Link href={backUrl} className="flex items-center gap-2">
+                                        <ArrowLeft className="size-3.5" />
+                                        <span>{backLabel}</span>
+                                    </Link>
+                                </Button>
+                            </div>
+                        );
+                    })()}
                 </header>
 
                 {/* MAIN CONTENT AREA */}
@@ -1035,10 +1047,29 @@ const Spj = (props: any) => {
 // MODAL VALIDASI KEUANGAN SPJ
 // -------------------------------------------------------------
 const ModalAjuanKeuangan = (props: any) => {
+    const auth: any = usePage().props.auth
     const edit_data = useMutation({
         mutationFn: (params: any) => memo_cair_request.validasi_keuangan_spj(params.id, params),
-        onSuccess: () => {
-            window.location.reload()
+        onSuccess: (res: any, variables: any) => {
+            const isApproved = variables.status_spj === "keuangan_applied";
+            toast.success(
+                isApproved 
+                    ? "Berkas SPJ berhasil disetujui (Valid)! Item otomatis keluar dari antrean aktif verifikasi." 
+                    : "Status revisi SPJ berhasil dikirim ke PIC! Item otomatis keluar dari antrean aktif verifikasi.", 
+                { position: "bottom-center" }
+            );
+            const isFromValidasi = typeof window !== 'undefined' && (
+                window.location.search.includes('from=validasi_spj') ||
+                document.referrer.includes('validasi_spj') ||
+                auth?.user?.role === 'verifikator_spj'
+            );
+            if (isFromValidasi) {
+                setTimeout(() => {
+                    window.location.href = '/dashboard/memo_cairs/validasi_spj';
+                }, 800);
+            } else {
+                window.location.reload();
+            }
         },
         onError: (err: any) => {
             const msg = err.response?.data?.data || err.response?.data?.message || "Gagal memperbarui status SPJ!"

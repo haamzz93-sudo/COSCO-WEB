@@ -626,10 +626,15 @@ class MemoCairController extends Controller
         //VALIDATION
         //Query parameters
         $validation=Validator::make($req, [
-            'per_page'      =>"nullable|integer|min:1",
-            'q'             =>"nullable",
-            'tor_id'        =>"nullable",
-            'status_ajuan'  =>"nullable"
+            'per_page'          =>"nullable|integer|min:1",
+            'q'                 =>"nullable",
+            'tor_id'            =>"nullable",
+            'status_ajuan'      =>"nullable",
+            'status_spj'        =>"nullable",
+            'is_validasi_spj'   =>"nullable",
+            'tab'               =>"nullable",
+            'program_studi_id'  =>"nullable",
+            'tahun'             =>"nullable"
         ]);
         if($validation->fails()){
             return response()->json([
