@@ -95,10 +95,18 @@ class TorRepo
             });
         }
 
-                // 7. Filter Kategori Kegiatan (Inventaris & BHP untuk Pejabat Pengadaan)
+        // 7. Filter Kategori Kegiatan (Inventaris & BHP untuk Pejabat Pengadaan)
         $kategori = isset($params['kategori']) ? trim((string)$params['kategori']) : '';
         if (!empty($kategori)) {
-            if ($kategori === 'inventaris_only' || $kategori === 'hps' || $kategori === 'inventaris_bhp') {
+            if ($kategori === 'inventaris' || $kategori === 'inventaris_only') {
+                $query->whereHas('kegiatan_detail', function ($kd) {
+                    $kd->where('kategori_kegiatan', 'inventaris');
+                });
+            } else if ($kategori === 'bhp') {
+                $query->whereHas('kegiatan_detail', function ($kd) {
+                    $kd->where('kategori_kegiatan', 'bhp');
+                });
+            } else if ($kategori === 'hps' || $kategori === 'inventaris_bhp') {
                 $query->whereHas('kegiatan_detail', function ($kd) {
                     $kd->whereIn('kategori_kegiatan', ['inventaris', 'bhp']);
                 });

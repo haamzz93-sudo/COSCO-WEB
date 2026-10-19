@@ -98,7 +98,7 @@ export default function ReviewInventaris() {
         tahun: String(new Date().getFullYear() || '2026'),
         program_studi_id: '',
         status_filter: 'all', // 'all', 'antrean_pp', 'proses_pesan', 'selesai'
-        kategori: 'inventaris_bhp',
+        kategori: 'inventaris',
     });
 
     // Modals
@@ -114,7 +114,7 @@ export default function ReviewInventaris() {
     const [fileBast, setFileBast] = useState<File | null>(null);
     const [catatanBast, setCatatanBast] = useState('');
 
-    // Query Data TOR (Inventaris & BHP)
+    // Query Data TOR (Hanya Ajuan Inventaris)
     const { data: torData, isLoading, refetch } = useQuery({
         queryKey: ['gets_tor_pengadaan', filter],
         queryFn: async () => {
@@ -124,7 +124,7 @@ export default function ReviewInventaris() {
                 q: filter.q,
                 tahun: filter.tahun,
                 program_studi_id: filter.program_studi_id,
-                kategori: 'inventaris_bhp',
+                kategori: filter.kategori || 'inventaris',
             };
 
             if (filter.status_filter === 'antrean_pp') {

@@ -55,7 +55,7 @@ export default function SpjInventaris() {
         q: '',
         tahun: String(new Date().getFullYear() || '2026'),
         program_studi_id: '',
-        kategori: 'inventaris_bhp',
+        kategori: 'inventaris',
         status_pengadaan: 'selesai',
     });
 
