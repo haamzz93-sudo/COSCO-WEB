@@ -884,7 +884,7 @@ class TorController extends Controller
         $req = $request->all();
 
         // ROLE AUTHENTICATION
-        if (!$login_data->checkIsAdmin() && Gate::denies('tor_pp_validasi', $login_data)) {
+        if (!$login_data->checkIsAdmin() && $login_data->role !== 'pejabat_pengadaan' && Gate::denies('tor_pp_validasi', $login_data)) {
             return response('Not Allowed.', 403);
         }
 
@@ -902,10 +902,10 @@ class TorController extends Controller
         $id = $id_data->id;
 
         // VALIDATION STATUS
-        if (!in_array($id_data['status_ajuan'], ["koordinator_applied"])) {
+        if (!$login_data->checkIsAdmin() && !in_array($id_data['status_ajuan'], ["koordinator_applied", "pp_applied", "pp_revisi"])) {
             return response()->json([
                 'error' => "VALIDATION_ERROR",
-                'data'  => "Status usulan saat ini bukan 'koordinator_applied' (menunggu telaah Pejabat Pengadaan)."
+                'data'  => "Status usulan saat ini bukan dalam tahap telaah Pejabat Pengadaan ('koordinator_applied')."
             ], 400);
         }
 
@@ -979,7 +979,7 @@ class TorController extends Controller
         $login_data = $request->user();
         $req = $request->all();
 
-        if (!$login_data->checkIsAdmin() && Gate::denies('pengadaan_pp_upload', $login_data) && Gate::denies('tor_pp_validasi', $login_data)) {
+        if (!$login_data->checkIsAdmin() && $login_data->role !== 'pejabat_pengadaan' && Gate::denies('pengadaan_pp_upload', $login_data) && Gate::denies('tor_pp_validasi', $login_data)) {
             return response('Not Allowed.', 403);
         }
 

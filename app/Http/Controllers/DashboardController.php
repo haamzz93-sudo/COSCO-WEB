@@ -1279,4 +1279,15 @@ class DashboardController extends Controller
     {
         return redirect('/dashboard');
     }
+
+    public function pengadaan_review_inventaris(Request $request)
+    {
+        return Inertia::render('dashboard/pengadaan/review_inventaris', []);
+    }
+
+    public function pengadaan_spj_inventaris(Request $request)
+    {
+        return Inertia::render('dashboard/pengadaan/spj_inventaris', []);
+    }
+
 }

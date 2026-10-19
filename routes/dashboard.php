@@ -50,6 +50,10 @@ Route::controller(DashboardController::class)->group(function(){
     Route::get("/spjs/detail/{memo_cair_id}", "spj_detail");
     Route::get("/spjs/print/{spj_id}", "spj_print");
     Route::get("/spjs/view/{spj_id}", "spj_viewer");
+    // PORTAL PEJABAT PENGADAAN (PP)
+    Route::match(['get', 'post'], '/pengadaan/review_inventaris', 'pengadaan_review_inventaris');
+    Route::match(['get', 'post'], '/pengadaan/spj_inventaris', 'pengadaan_spj_inventaris');
+
     // PERJALANAN DINAS (SPPD)
     Route::get("/perjalanan_dinas", "perjalanan_dinas");
     Route::match(['get', 'post'], "/perjalanan_dinas/isi_bukti/{id?}", "perjalanan_dinas_form");
