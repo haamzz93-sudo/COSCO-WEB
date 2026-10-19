@@ -1315,13 +1315,34 @@ function Rab(props: any) {
                     )}
 
                     {(() => {
+                        const status = props.tor?.status_ajuan || "draft"
                         const kategori = props.tor?.kegiatan_detail?.kategori_kegiatan || props.tor?.kategori_kegiatan || "kegiatan"
                         const isHps = kategori === "bhp" || kategori === "inventaris"
                         const isInventaris = kategori === "inventaris"
                         const docLabel = isHps ? `HPS ${isInventaris ? "Inventaris" : "BHP"}` : "TOR & RAB"
+                        const canPP = isHps && (status === "koordinator_applied") && (auth.user?.permissions?.includes("tor_pp_validasi") || auth.user?.role === "pejabat_pengadaan" || auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin)
 
                         return (
-                            <div className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                            <div className="space-y-3">
+                                {canPP && (
+                                    <div className="w-full p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 shrink-0 mt-0.5">
+                                                <ShieldCheck className="size-5" />
+                                            </div>
+                                            <div>
+                                                <h5 className="font-black text-amber-950 dark:text-amber-100 text-xs uppercase tracking-wider">
+                                                    Tahap 3: Telaah & Validasi HPS oleh Pejabat Pengadaan (PP)
+                                                </h5>
+                                                <p className="text-[11px] text-amber-900 dark:text-amber-200/90 mt-0.5 leading-relaxed font-medium">
+                                                    Verifikasi kewajaran harga pasar, ketersediaan E-Katalog & metode PBJ. Teliti rincian seluruh item barang belanja di atas sebelum memutuskan rekomendasi persetujuan ke Wakil Dekan II.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
                                 {isHps ? (
                                     <Link 
                                         href={`/dashboard/tors/detail_kegiatan/${props.tor.kegiatan_detail_id || props.tor.id}`}
@@ -1549,31 +1570,49 @@ function Rab(props: any) {
 
                                 const handleApprovalAction = (isApprove: boolean) => {
                                     let roleLabel = canKoor ? "Koordinator" : canPP ? "Pejabat Pengadaan (PP)" : canKeu ? "Keuangan" : "Wakil Dekan II"
-                                    let actionTitle = isApprove ? `Setujui ${isHps ? "HPS" : "TOR & RAB"} (${roleLabel})` : `Kembalikan / Perlu Revisi (${roleLabel})`
+                                    let actionTitle = canPP
+                                        ? (isApprove ? "Rekomendasikan (ACC) HPS ke Wadek II" : "Minta Revisi HPS ke PIC")
+                                        : (isApprove ? `Setujui ${isHps ? "HPS" : "TOR & RAB"} (${roleLabel})` : `Kembalikan / Perlu Revisi (${roleLabel})`)
                                     
+                                    const confirmText = canPP
+                                        ? (isApprove ? "Kirim Rekomendasi (ACC)" : "Kirim Catatan Revisi")
+                                        : (isApprove ? "Ya, Setujui Dokumen!" : "Kembalikan untuk Revisi")
+
+                                    const htmlDesc = canPP
+                                        ? (isApprove
+                                            ? '<p class="text-slate-600 font-medium">Verifikasi kewajaran harga pasar, ketersediaan E-Katalog & metode PBJ. Berikan catatan telaah/rekomendasi untuk Wakil Dekan II:</p>'
+                                            : '<p class="text-slate-600 font-medium">Tuliskan poin spesifikasi teknis atau estimasi harga satuan yang perlu disesuaikan PIC:</p>')
+                                        : (isApprove 
+                                            ? '<p class="text-slate-600 font-medium">Apakah Anda yakin ingin menyetujui dan meneruskan dokumen TOR & RAB ini?</p>' 
+                                            : '<p class="text-slate-600 font-medium">Tuliskan instruksi revisi secara lengkap agar PIC kegiatan dapat segera memperbaikinya:</p>')
+
+                                    const placeholderText = canPP
+                                        ? (isApprove
+                                            ? 'Contoh: Telah dicek pada E-Katalog LKPP, estimasi harga sesuai standar. Rekomendasi metode Pengadaan Langsung.'
+                                            : 'Contoh: Spesifikasi teknis item No. 4 belum melampirkan link E-Katalog pembanding atau harga perlu disesuaikan PIC...')
+                                        : (isApprove
+                                            ? 'Tuliskan catatan apresiasi / persetujuan (opsional)...'
+                                            : 'Contoh: Rincian item honor narasumber perlu disesuaikan...')
+
                                     MySwal.fire({
                                         title: actionTitle,
                                         html: `
                                             <div class="text-left text-xs space-y-2 mt-2">
-                                                <p class="text-slate-600 font-medium">
-                                                    ${isApprove 
-                                                        ? 'Apakah Anda yakin ingin menyetujui dan meneruskan dokumen TOR & RAB ini?' 
-                                                        : 'Tuliskan instruksi revisi secara lengkap agar PIC kegiatan dapat segera memperbaikinya:'}
-                                                </p>
+                                                ${htmlDesc}
                                             </div>
                                         `,
                                         input: 'textarea',
-                                        inputPlaceholder: isApprove ? 'Tuliskan catatan apresiasi / persetujuan (opsional)...' : 'Contoh: Rincian item honor narasumber perlu disesuaikan...',
+                                        inputPlaceholder: placeholderText,
                                         inputAttributes: {
                                             rows: '4'
                                         },
                                         showCancelButton: true,
-                                        confirmButtonText: isApprove ? 'Ya, Setujui Dokumen!' : 'Kembalikan untuk Revisi',
+                                        confirmButtonText: confirmText,
                                         cancelButtonText: 'Batal',
                                         confirmButtonColor: isApprove ? '#1e3a8a' : '#dc2626',
                                         customClass: {
                                             popup: "!rounded-2xl !p-6 !max-w-md",
-                                            title: `!text-base !font-extrabold ${isApprove ? '!text-blue-950' : '!text-red-600'}`,
+                                            title: `!text-base !font-extrabold ${isApprove ? '!text-blue-950 dark:!text-blue-100' : '!text-red-600'}`,
                                             input: '!text-xs !rounded-xl !border-slate-300 focus:!ring-blue-900',
                                             confirmButton: `${isApprove ? 'bg-blue-900 hover:bg-blue-800' : 'bg-red-600 hover:bg-red-700'} text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs`,
                                             cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl mr-2'
@@ -1611,11 +1650,14 @@ function Rab(props: any) {
 
                                             reqAction.then(() => {
                                                 if (isApprove) {
-                                                    toast.success("Dokumen Berhasil Disetujui!", { position: "bottom-center" })
+                                                    toast.success(canPP ? "HPS Berhasil Ditelaah & Direkomendasikan ke Wadek II!" : "Dokumen Berhasil Disetujui!", { position: "bottom-center" })
                                                 } else {
-                                                    toast.warning("Dokumen Dikembalikan ke PIC untuk Revisi!", { position: "bottom-center" })
+                                                    toast.warning(canPP ? "HPS Dikembalikan ke PIC untuk Revisi!" : "Dokumen Dikembalikan ke PIC untuk Revisi!", { position: "bottom-center" })
                                                 }
-                                                router.visit("/dashboard/tors/persetujuan")
+                                                const redirectUrl = (auth.user?.role === "pejabat_pengadaan" || auth.user?.permissions?.includes("tor_pp_validasi"))
+                                                    ? "/dashboard/pengadaan/review_inventaris"
+                                                    : "/dashboard/tors/persetujuan";
+                                                router.visit(redirectUrl);
                                             }).catch((err: any) => {
                                                 const msg = err.response?.data?.data || err.response?.data?.message || "Gagal Memproses Validasi"
                                                 toast.error(msg, { position: "bottom-center" })
@@ -1691,7 +1733,7 @@ function Rab(props: any) {
                                                     onClick={() => handleApprovalAction(false)}
                                                 >
                                                     <X className="size-4" />
-                                                    <span>Kembalikan / Perlu Revisi</span>
+                                                    <span>{canPP ? "Minta Revisi HPS" : "Kembalikan / Perlu Revisi"}</span>
                                                 </Button>
 
                                                 <Button
@@ -1701,10 +1743,10 @@ function Rab(props: any) {
                                                 >
                                                     <CheckCircle2 className="size-4 text-amber-400" />
                                                     <span>
-                                                        {canKoor 
+                                                        {canPP
+                                                            ? "Rekomendasikan (ACC) HPS"
+                                                            : canKoor 
                                                             ? (isHps ? "Setujui (Lanjut ke PP)" : "Setujui (Lanjut ke Wakil Dekan)")
-                                                            : canPP
-                                                            ? "Validasi HPS (Rekomendasikan ke Wadek II)"
                                                             : "Setujui & Sahkan"}
                                                     </span>
                                                 </Button>
@@ -1715,8 +1757,9 @@ function Rab(props: any) {
                             })()}
                                 </div>
                             </div>
-                        )
-                    })()}
+                        </div>
+                    )
+                })()}
                     {modalUploadBAST && (
                         <ModalUploadDokumenPengadaan
                             open={modalUploadBAST}
