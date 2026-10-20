@@ -237,12 +237,26 @@ class PerjalananDinasRepo
                     ->sum('nominal_klaim');
 
             } else {
-                // === MODE GLOBAL ADMIN (HANYA MENGHITUNG PAGU PERJALANAN DINAS / TRANSPORTASI) ===
+                // === MODE GLOBAL ADMIN (AMBIL PAKET PERJALANAN DINAS YANG BELUM DIISI ATAU DIGUNAKAN) ===
                 $kdGlobalQuery = \Illuminate\Support\Facades\DB::table('kegiatan_details')
                     ->join('kegiatans', 'kegiatan_details.kegiatan_id', '=', 'kegiatans.id')
+                    ->leftJoin('tors', 'tors.kegiatan_detail_id', '=', 'kegiatan_details.id')
                     ->where('kegiatans.tahun', $tahun);
                 self::applyTransportFilter($kdGlobalQuery);
-                $sumKdTransportPagu = (int) $kdGlobalQuery->sum('kegiatan_details.biaya');
+                
+                // Cari paket perjalanan dinas yang belum diisi TOR atau berjenis Pengganti Tiket, Tol dan BBM
+                $unusedItem = (clone $kdGlobalQuery)
+                    ->where(function($q) {
+                        $q->whereNull('tors.id')
+                          ->orWhere('tors.status', '!=', 'disetujui')
+                          ->orWhere('kegiatan_details.nama_kegiatan_detail', 'LIKE', '%tiket%')
+                          ->orWhere('kegiatan_details.nama_kegiatan_detail', 'LIKE', '%pengganti%');
+                    })
+                    ->orderByRaw("CASE WHEN LOWER(kegiatan_details.nama_kegiatan_detail) LIKE '%tiket%' THEN 0 ELSE 1 END")
+                    ->select('kegiatan_details.id', 'kegiatan_details.biaya', 'kegiatan_details.nama_kegiatan_detail')
+                    ->first();
+
+                $sumKdTransportPagu = (int) (clone $kdGlobalQuery)->sum('kegiatan_details.biaya');
 
                 $dbPaguManual = 0;
                 if (class_exists(\App\Models\PaguPerjalananDinasModel::class)) {
@@ -256,31 +270,38 @@ class PerjalananDinasRepo
                     $dbPaguManual = (int) ($activePagu->total_pagu ?? 0);
                 }
 
-                // Pagu Perjalanan Dinas resmi: prioritaskan sum pagu kegiatan transportasi / dinas (contoh: Rp 29.000.000)
-                $totalPagu = $sumKdTransportPagu > 0 ? $sumKdTransportPagu : $dbPaguManual;
+                // Pagu Perjalanan Dinas resmi: Utamakan paket belum terpakai (Pengganti Tiket, Tol dan BBM Rp 29.000.000)
+                if ($unusedItem && (int)$unusedItem->biaya > 0) {
+                    $totalPagu = (int) $unusedItem->biaya;
+                    $targetPackageId = $unusedItem->id;
+                } else {
+                    $totalPagu = $sumKdTransportPagu > 0 ? $sumKdTransportPagu : $dbPaguManual;
+                    $targetPackageId = null;
+                }
 
                 if (class_exists(\App\Models\PerjalananDinasModel::class)) {
-                    $totalDibayarkan = (int) \App\Models\PerjalananDinasModel::where('status', 'dibayarkan')
-                        ->where(function($q) use ($tahun) {
+                    $pdActiveQuery = \App\Models\PerjalananDinasModel::query();
+                    if ($targetPackageId) {
+                        $pdActiveQuery->where('kegiatan_detail_id', $targetPackageId);
+                    } else {
+                        $pdActiveQuery->where(function($q) use ($tahun) {
                             $q->whereHas('kegiatan_detail.kegiatan', function($k) use ($tahun) {
                                 $k->where('tahun', $tahun);
                             })
                             ->orWhereYear('tgl_berangkat', $tahun)
                             ->orWhereYear('created_at', $tahun);
-                        })
+                        });
+                    }
+
+                    $totalDibayarkan = (int) (clone $pdActiveQuery)
+                        ->where('status', 'dibayarkan')
                         ->get()
                         ->sum(function($p) {
                             return $p->nominal_disetujui > 0 ? $p->nominal_disetujui : ($p->nominal_klaim ?: 0);
                         });
 
-                    $totalPending = (int) \App\Models\PerjalananDinasModel::whereIn('status', ['diajukan', 'diverifikasi'])
-                        ->where(function($q) use ($tahun) {
-                            $q->whereHas('kegiatan_detail.kegiatan', function($k) use ($tahun) {
-                                $k->where('tahun', $tahun);
-                            })
-                            ->orWhereYear('tgl_berangkat', $tahun)
-                            ->orWhereYear('created_at', $tahun);
-                        })
+                    $totalPending = (int) (clone $pdActiveQuery)
+                        ->whereIn('status', ['diajukan', 'diverifikasi'])
                         ->sum('nominal_klaim');
                 }
             }

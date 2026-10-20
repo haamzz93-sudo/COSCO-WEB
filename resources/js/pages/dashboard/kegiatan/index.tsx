@@ -942,7 +942,7 @@ const TableKegiatan = (props: any) => {
                                                                     const kat = String(item2.kategori_kegiatan || 'kegiatan').toLowerCase();
                                                                     const namaInduk = String(item.nama_kegiatan || '').toLowerCase();
                                                                     const namaDet = String(item2.nama_kegiatan_detail || '').toLowerCase();
-                                                                    const isTransport = kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('transportasi') || namaInduk.includes('perjalanan dinas') || namaDet.includes('tiket') || namaDet.includes('tol') || namaDet.includes('bbm');
+                                                                    const isTransport = (kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('perjalanan dinas')) && kat !== 'bhp' && kat !== 'inventaris';
 
                                                                     if (kat === 'bhp') {
                                                                         return (
@@ -1115,7 +1115,7 @@ const TableKegiatan = (props: any) => {
                                                                 const kat = String(item2.kategori_kegiatan || 'kegiatan').toLowerCase();
                                                                 const namaInduk = String(item.nama_kegiatan || '').toLowerCase();
                                                                 const namaDet = String(item2.nama_kegiatan_detail || '').toLowerCase();
-                                                                const isTransport = kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('transportasi') || namaInduk.includes('perjalanan dinas') || namaDet.includes('tiket') || namaDet.includes('tol') || namaDet.includes('bbm');
+                                                                const isTransport = (kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('perjalanan dinas')) && kat !== 'bhp' && kat !== 'inventaris';
 
                                                                 if (!isTransport) return null;
 
