@@ -119,25 +119,17 @@ class PerjalananDinasRepo
     public static function applyTransportFilter($query, $kdTable = 'kegiatan_details', $kegiatanTable = 'kegiatans')
     {
         return $query->where(function($w) use ($kdTable, $kegiatanTable) {
-            $w->whereIn(DB::raw("LOWER(COALESCE({$kdTable}.kategori_kegiatan, ''))"), ['transportasi', 'perjalanan_dinas', 'perjalanan dinas'])
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%tiket%')
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%tol%')
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%bbm%')
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%transport%')
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%perjalanan dinas%')
-              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%sppd%');
-
-            // Tangani nama kegiatan induk secara dinamis (orWhereHas untuk Eloquent Model, atau kolom tabel langsung jika sudah di-join)
-            if (method_exists($w, 'orWhereHas')) {
-                $w->orWhereHas('kegiatan', function($k) {
-                    $k->where(DB::raw('LOWER(nama_kegiatan)'), 'LIKE', '%transportasi%')
-                      ->orWhere(DB::raw('LOWER(nama_kegiatan)'), 'LIKE', '%perjalanan dinas%')
+            // HANYA ambil sub-kegiatan resmi di bawah kegiatan induk 'Perjalanan Dinas'
+            if (method_exists($w, 'whereHas')) {
+                $w->whereHas('kegiatan', function($k) {
+                    $k->where(DB::raw('LOWER(nama_kegiatan)'), 'LIKE', '%perjalanan dinas%')
                       ->orWhere(DB::raw('LOWER(nama_kegiatan)'), 'LIKE', '%perjalanan_dinas%');
                 });
             } else {
-                $w->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%transportasi%')
-                  ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan dinas%')
-                  ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan_dinas%');
+                $w->where(function($sub) use ($kegiatanTable) {
+                    $sub->where(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan dinas%')
+                        ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan_dinas%');
+                });
             }
         });
     }
