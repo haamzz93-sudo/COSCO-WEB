@@ -771,6 +771,60 @@ export default function PerjalananDinasIndex(props: any) {
                         </div>
                     </div>
 
+                    {/* Rincian Sinkronisasi Kedua Paket Pagu Transportasi (TA 2026) */}
+                    {paguSummary?.paket_list && paguSummary.paket_list.length > 0 && (
+                        <div className="bg-gradient-to-r from-blue-50/70 via-slate-50 to-amber-50/50 dark:from-slate-900/80 dark:to-slate-800/80 border border-blue-200/70 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="size-5 rounded-md bg-blue-900 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
+                                        ✓
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        Rincian Paket Alokasi Anggaran Transportasi Resmi (TA {selectedYear})
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        • Total Pagu Gabungan: <strong className="text-blue-900 dark:text-blue-300 font-extrabold">{formatRupiah(paguSummary.total_pagu || 0)}</strong>
+                                    </span>
+                                </div>
+                                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-100/70 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full self-start md:self-auto border border-emerald-200/50">
+                                    Tersinkron Realtime
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2.5">
+                                {paguSummary.paket_list.map((pkt: any) => (
+                                    <div 
+                                        key={pkt.id}
+                                        className="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition-all"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                                                    {pkt.nama}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                    PIC: {pkt.pic_name}
+                                                </div>
+                                            </div>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                pkt.is_available 
+                                                    ? 'bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200/60'
+                                                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200/60'
+                                            }`}>
+                                                {pkt.is_available ? '✓ TERSEDIA' : '✗ PENUH'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px] mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                            <span className="text-slate-500">Pagu: <strong className="text-slate-700 dark:text-slate-300">{formatRupiah(pkt.biaya)}</strong></span>
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                                Sisa: {formatRupiah(pkt.sisa)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Navigation & Official Workflow Routing */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2 overflow-x-auto py-1">

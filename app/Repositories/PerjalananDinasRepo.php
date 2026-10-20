@@ -100,6 +100,14 @@ class PerjalananDinasRepo
                 });
             }
 
+            // 2. Drop / abaikan data dummy testing lawas (tetsing / ST lama September yang bukan dinas riil)
+            $query->where(function($w) {
+                $w->where('nama_kegiatan', 'NOT LIKE', '%tetsing%')
+                  ->where('nama_kegiatan', 'NOT LIKE', '%(Operasional / Lomba / Workshop)%')
+                  ->where('nomor_surat_tugas', 'NOT LIKE', 'ST/20260924%')
+                  ->where('nomor_surat_tugas', 'NOT LIKE', 'ST/2026091%');
+            });
+
             // Urutkan: Data terbaru di atas, data lama di bawah
             return $query->orderBy('created_at', 'desc')->orderBy('id', 'desc')->paginate($perPage);
         } catch (\Throwable $e) {
@@ -288,6 +296,56 @@ class PerjalananDinasRepo
             $sisaPagu = max(0, $totalPagu - $totalDibayarkan);
             $persentase = $totalPagu > 0 ? round(($totalDibayarkan / $totalPagu) * 100, 1) : 0;
 
+            // Rincian masing-masing paket transportasi resmi (Tiket/Tol/BBM Rp 29jt, Sewa Hiace Rp 21jt, dll)
+            $paketList = [];
+            try {
+                $kdPaketQuery = \Illuminate\Support\Facades\DB::table('kegiatan_details')
+                    ->join('kegiatans', 'kegiatan_details.kegiatan_id', '=', 'kegiatans.id')
+                    ->leftJoin('users', 'kegiatan_details.pic_kegiatan', '=', 'users.id')
+                    ->where('kegiatans.tahun', $tahun);
+                self::applyTransportFilter($kdPaketQuery);
+                $rawPakets = $kdPaketQuery->select(
+                    'kegiatan_details.id',
+                    'kegiatan_details.nama_kegiatan_detail',
+                    'kegiatan_details.biaya',
+                    'kegiatan_details.pic_kegiatan',
+                    'users.name as pic_name',
+                    'kegiatans.nama_kegiatan'
+                )->orderBy('kegiatan_details.biaya', 'desc')->get();
+
+                foreach ($rawPakets as $pk) {
+                    $used = 0;
+                    $pending = 0;
+                    if (class_exists(\App\Models\PerjalananDinasModel::class)) {
+                        $used = (int) \App\Models\PerjalananDinasModel::where('kegiatan_detail_id', $pk->id)
+                            ->where('status', 'dibayarkan')
+                            ->get()
+                            ->sum(function($p) {
+                                return $p->nominal_disetujui > 0 ? $p->nominal_disetujui : ($p->nominal_klaim ?: 0);
+                            });
+
+                        $pending = (int) \App\Models\PerjalananDinasModel::where('kegiatan_detail_id', $pk->id)
+                            ->whereIn('status', ['diajukan', 'diverifikasi'])
+                            ->sum('nominal_klaim');
+                    }
+
+                    $biaya = (int) $pk->biaya;
+                    $sisa = max(0, $biaya - $used);
+
+                    $paketList[] = [
+                        'id'           => $pk->id,
+                        'nama'         => $pk->nama_kegiatan_detail,
+                        'kegiatan'     => $pk->nama_kegiatan,
+                        'biaya'        => $biaya,
+                        'dibayarkan'   => $used,
+                        'pending'      => $pending,
+                        'sisa'         => $sisa,
+                        'pic_name'     => $pk->pic_name ?: 'Belum ditentukan',
+                        'is_available' => $sisa > 0
+                    ];
+                }
+            } catch (\Throwable $e) {}
+
             return [
                 'tahun'             => (int) $tahun,
                 'total_pagu'        => $totalPagu,
@@ -296,6 +354,7 @@ class PerjalananDinasRepo
                 'sisa_pagu'         => $sisaPagu,
                 'persentase'        => $persentase,
                 'pagu_list'         => $paguList,
+                'paket_list'        => $paketList,
                 'active_pagu'       => $activePagu,
                 'is_per_pic'        => $targetUserId !== null,
                 'pic_id'            => $targetUserId,
