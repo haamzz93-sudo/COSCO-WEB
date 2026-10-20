@@ -19,38 +19,55 @@ class PerjalananDinasController extends Controller
 {
     public function gets(Request $request)
     {
-        $loginUser = $request->user();
-        $params = $request->all();
-
-        $data = PerjalananDinasRepo::gets($params, $loginUser);
-        $paguSummary = PerjalananDinasRepo::getPaguSummary($params['tahun'] ?? null, $loginUser, $params);
-
-        $usersList = [];
         try {
-            if (class_exists(User::class)) {
-                $usersList = User::select('id', 'name', 'email', 'role')->orderBy('name', 'asc')->get();
+            $loginUser = $request->user();
+            $params = $request->all();
+
+            $data = PerjalananDinasRepo::gets($params, $loginUser);
+            $paguSummary = PerjalananDinasRepo::getPaguSummary($params['tahun'] ?? null, $loginUser, $params);
+
+            $usersList = [];
+            try {
+                if (class_exists(User::class)) {
+                    $usersList = User::select('id', 'name', 'email', 'role')->orderBy('name', 'asc')->get();
+                }
+            } catch (\Throwable $e) {}
+
+            $tahunFilter = $params['tahun'] ?? date('Y');
+            $kegiatanList = [];
+            try {
+                $kdQuery = KegiatanDetailModel::with(['kegiatan', 'tor', 'user_pic', 'user_pic_kegiatan'])
+                    ->whereHas('kegiatan', function($q) use ($tahunFilter) {
+                        $q->where('tahun', $tahunFilter);
+                    });
+
+                if (class_exists(PerjalananDinasRepo::class)) {
+                    PerjalananDinasRepo::applyTransportFilter($kdQuery);
+                }
+
+                $kegiatanList = $kdQuery->orderBy('id', 'desc')->get();
+            } catch (\Throwable $e) {
+                Log::warning('Error getting kegiatanList in PerjalananDinasController gets: ' . $e->getMessage());
             }
-        } catch (\Throwable $e) {}
 
-        $tahunFilter = $params['tahun'] ?? date('Y');
-        $kdQuery = KegiatanDetailModel::with(['kegiatan', 'tor', 'user_pic', 'user_pic_kegiatan'])
-            ->whereHas('kegiatan', function($q) use ($tahunFilter) {
-                $q->where('tahun', $tahunFilter);
-            });
-
-        if (class_exists(PerjalananDinasRepo::class)) {
-            PerjalananDinasRepo::applyTransportFilter($kdQuery);
+            return response()->json([
+                'status'        => 'success',
+                'data'          => $data,
+                'pagu_summary'  => $paguSummary,
+                'kegiatan_list' => $kegiatanList,
+                'users_list'    => $usersList
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('PerjalananDinasController gets error: ' . $e->getMessage());
+            return response()->json([
+                'status'        => 'error',
+                'message'       => $e->getMessage(),
+                'data'          => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15),
+                'pagu_summary'  => [],
+                'kegiatan_list' => [],
+                'users_list'    => []
+            ]);
         }
-
-        $kegiatanList = $kdQuery->orderBy('id', 'desc')->get();
-
-        return response()->json([
-            'status'        => 'success',
-            'data'          => $data,
-            'pagu_summary'  => $paguSummary,
-            'kegiatan_list' => $kegiatanList,
-            'users_list'    => $usersList
-        ]);
     }
 
     public function get(Request $request, $id)
