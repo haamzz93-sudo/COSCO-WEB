@@ -940,6 +940,10 @@ const TableKegiatan = (props: any) => {
                                                                 {/* BADGE KATEGORI SUB KEGIATAN */}
                                                                 {(() => {
                                                                     const kat = String(item2.kategori_kegiatan || 'kegiatan').toLowerCase();
+                                                                    const namaInduk = String(item.nama_kegiatan || '').toLowerCase();
+                                                                    const namaDet = String(item2.nama_kegiatan_detail || '').toLowerCase();
+                                                                    const isTransport = kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('transportasi') || namaInduk.includes('perjalanan dinas') || namaDet.includes('tiket') || namaDet.includes('tol') || namaDet.includes('bbm');
+
                                                                     if (kat === 'bhp') {
                                                                         return (
                                                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700">
@@ -951,6 +955,14 @@ const TableKegiatan = (props: any) => {
                                                                         return (
                                                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-700">
                                                                                 Inventaris
+                                                                            </span>
+                                                                        );
+                                                                    }
+                                                                    if (isTransport) {
+                                                                        return (
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300 dark:bg-blue-950/80 dark:text-blue-300 dark:border-blue-700">
+                                                                                <Luggage className="size-3 text-blue-800 dark:text-blue-300" />
+                                                                                <span>Transportasi</span>
                                                                             </span>
                                                                         );
                                                                     }
@@ -1098,15 +1110,26 @@ const TableKegiatan = (props: any) => {
                                                                 )
                                                             })()}
 
-                                                            {/* TOMBOL PINTASAN PERJALANAN DINAS (LANGSUNG PENUGASAN) */}
-                                                            <Link
-                                                                href={`/dashboard/perjalanan_dinas?action=create&tor_id=${item2.id}`}
-                                                                title="Tugaskan Perjalanan Dinas untuk Kegiatan Ini"
-                                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-blue-200 dark:border-blue-900 bg-blue-50/80 hover:bg-blue-100 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 transition-all active:scale-[0.98]"
-                                                            >
-                                                                <Luggage className="size-3.5 text-blue-800 dark:text-blue-300" />
-                                                                <span className="hidden xl:inline">Tugas Dinas</span>
-                                                            </Link>
+                                                            {/* TOMBOL PINTASAN PERJALANAN DINAS (HANYA UNTUK KATEGORI TRANSPORTASI / PERJALANAN DINAS) */}
+                                                            {(() => {
+                                                                const kat = String(item2.kategori_kegiatan || 'kegiatan').toLowerCase();
+                                                                const namaInduk = String(item.nama_kegiatan || '').toLowerCase();
+                                                                const namaDet = String(item2.nama_kegiatan_detail || '').toLowerCase();
+                                                                const isTransport = kat === 'transportasi' || kat === 'perjalanan_dinas' || namaInduk.includes('transportasi') || namaInduk.includes('perjalanan dinas') || namaDet.includes('tiket') || namaDet.includes('tol') || namaDet.includes('bbm');
+
+                                                                if (!isTransport) return null;
+
+                                                                return (
+                                                                    <Link
+                                                                        href={`/dashboard/perjalanan_dinas?action=create&tor_id=${item2.id}`}
+                                                                        title="Tugaskan Perjalanan Dinas untuk Paket Transportasi Ini"
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-blue-200 dark:border-blue-900 bg-blue-50/80 hover:bg-blue-100 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300 transition-all active:scale-[0.98]"
+                                                                    >
+                                                                        <Luggage className="size-3.5 text-blue-800 dark:text-blue-300" />
+                                                                        <span className="hidden xl:inline">Tugas Dinas</span>
+                                                                    </Link>
+                                                                );
+                                                            })()}
 
                                                             {/* TOMBOL AKSI EDIT & HAPUS DETAIL KHUSUS SUPERADMIN & KOORDINATOR */}
                                                             {canEditDetail && (

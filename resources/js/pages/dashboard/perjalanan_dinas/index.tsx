@@ -266,11 +266,16 @@ export default function PerjalananDinasIndex(props: any) {
             setIsCreateModalOpen(true);
             const selected = (kegiatanList || []).find((k: any) => String(k.id) === String(torId)) || props?.tor_detail;
             if (selected) {
+                const totalBiaya = Number(selected.biaya || 0);
+                const relatedItems = (items || []).filter((it: any) => String(it.kegiatan_detail_id) === String(selected.id || selected.kegiatan_detail_id || torId));
+                const terpakai = relatedItems.reduce((acc: number, it: any) => acc + Number(it.nominal_disetujui || it.nominal_klaim || it.nominal_pagu || 0), 0);
+                const sisa = totalBiaya > 0 ? Math.max(0, totalBiaya - terpakai) : 0;
+
                 setNewForm((prev: any) => ({
                     ...prev,
                     kegiatan_detail_id: String(selected.kegiatan_detail_id || selected.id || torId),
                     nama_kegiatan: `${selected?.kegiatan?.nama_kegiatan || selected.nama_kegiatan ? (selected?.kegiatan?.nama_kegiatan || selected.nama_kegiatan) + ' — ' : ''}${selected.nama_kegiatan_detail}`,
-                    nominal_pagu: selected.biaya || prev.nominal_pagu,
+                    nominal_pagu: sisa > 0 ? sisa : (totalBiaya || prev.nominal_pagu),
                     user_id: selected.pic_kegiatan ? String(selected.pic_kegiatan) : prev.user_id,
                 }));
                 if (selected.tahun) {
@@ -362,25 +367,51 @@ export default function PerjalananDinasIndex(props: any) {
         return Math.max(1, diff);
     };
 
-        const handleOpenCreateModal = () => {
-        // Cari detail TOR kategori transportasi secara cerdas jika ada
-        const transportTor = (kegiatanList || []).find((k: any) => 
-            k.kategori_kegiatan === 'transportasi' || 
-            k.nama_kegiatan_detail?.toUpperCase().includes('TRANSPORTASI') ||
-            k.nama_kegiatan_detail?.toUpperCase().includes('TIKET') ||
-            k.nama_kegiatan_detail?.toUpperCase().includes('TOL') ||
-            k.kegiatan?.nama_kegiatan?.toUpperCase().includes('TRANSPORTASI')
-        ) || (kegiatanList && kegiatanList[0]);
+    const handleOpenCreateModal = () => {
+        // Cari paket dinas transportasi yang pagunya masih tersedia (belum habis / sisa > 0)
+        const isTransportMatch = (k: any) => {
+            const kat = String(k.kategori_kegiatan || '').toLowerCase();
+            const namaDet = String(k.nama_kegiatan_detail || '').toLowerCase();
+            const namaInduk = String(k.kegiatan?.nama_kegiatan || '').toLowerCase();
+            return kat === 'transportasi' || 
+                kat === 'perjalanan_dinas' ||
+                kat === 'perjalanan dinas' ||
+                namaInduk.includes('transportasi') ||
+                namaInduk.includes('perjalanan dinas') ||
+                namaDet.includes('tiket') ||
+                namaDet.includes('tol') ||
+                namaDet.includes('bbm') ||
+                namaDet.includes('transport') ||
+                namaDet.includes('perjalanan dinas') ||
+                namaDet.includes('sppd');
+        };
+
+        const calcRemaining = (k: any) => {
+            const total = Number(k?.biaya || 0);
+            const related = (items || []).filter((it: any) => String(it.kegiatan_detail_id) === String(k?.id));
+            const used = related.reduce((acc: number, it: any) => acc + Number(it.nominal_disetujui || it.nominal_klaim || it.nominal_pagu || 0), 0);
+            return Math.max(0, total - used);
+        };
+
+        // Prioritas 1: Ambil kegiatan dinas transport yang sisa pagunya masih aktif (> 0)
+        const transportWithSisa = (kegiatanList || []).find((k: any) => isTransportMatch(k) && calcRemaining(k) > 0);
+        // Prioritas 2: Kegiatan transport apa pun
+        const transportTor = transportWithSisa || (kegiatanList || []).find(isTransportMatch) || (kegiatanList && kegiatanList[0]);
+
+        const targetKdId = transportTor ? String(transportTor.id) : '';
+        const sisaPagu = transportTor ? calcRemaining(transportTor) : (paguSummary?.sisa_pagu || paguSummary?.total_pagu || 0);
+        const targetBiaya = Number(transportTor?.biaya || 0);
 
         setNewForm({
-            user_id: user?.id || '',
+            user_id: transportTor?.pic_kegiatan ? String(transportTor.pic_kegiatan) : (user?.id || ''),
             nomor_surat_tugas: '',
-            nama_kegiatan: '',
-            nominal_pagu: transportTor?.biaya || paguSummary?.total_pagu || 10000000,
-            kegiatan_detail_id: transportTor ? String(transportTor.id) : '',
+            nama_kegiatan: transportTor ? `${transportTor?.kegiatan?.nama_kegiatan ? transportTor.kegiatan.nama_kegiatan + ' — ' : ''}${transportTor.nama_kegiatan_detail}` : '',
+            nominal_pagu: sisaPagu > 0 ? sisaPagu : (targetBiaya || paguSummary?.total_pagu || 10000000),
+            kegiatan_detail_id: targetKdId,
             tgl_berangkat: new Date().toISOString().split('T')[0],
             tgl_kembali: new Date().toISOString().split('T')[0],
             jenis_transportasi: 'Kereta Api',
+            tujuan_provinsi: 'Jawa Timur',
             tujuan_kota: 'Daerah Khusus Ibukota Jakarta',
             tujuan_tempat: '',
         });
@@ -1143,8 +1174,10 @@ export default function PerjalananDinasIndex(props: any) {
                                                 const relatedItems = (items || []).filter((it: any) => String(it.kegiatan_detail_id) === String(k.id));
                                                 const terpakai = relatedItems.reduce((acc: number, it: any) => acc + Number(it.nominal_disetujui || it.nominal_klaim || it.nominal_pagu || 0), 0);
                                                 const sisa = Math.max(0, Number(k.biaya || 0) - terpakai);
+                                                const isAvailable = sisa > 0;
                                                 return (
                                                     <option key={k.id} value={k.id}>
+                                                        {isAvailable ? '✓ [TERSEDIA] ' : '✗ [PAGU PENUH] '}
                                                         {k.kegiatan?.nama_kegiatan ? `[${k.kegiatan.nama_kegiatan}] ` : ''}{k.nama_kegiatan_detail} — Pagu: Rp {Number(k.biaya || 0).toLocaleString('id-ID')} (Sisa: Rp {sisa.toLocaleString('id-ID')})
                                                     </option>
                                                 );

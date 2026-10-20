@@ -33,12 +33,16 @@ class PerjalananDinasController extends Controller
         } catch (\Throwable $e) {}
 
         $tahunFilter = $params['tahun'] ?? date('Y');
-        $kegiatanList = KegiatanDetailModel::with(['kegiatan', 'tor', 'user_pic'])
+        $kdQuery = KegiatanDetailModel::with(['kegiatan', 'tor', 'user_pic', 'user_pic_kegiatan'])
             ->whereHas('kegiatan', function($q) use ($tahunFilter) {
                 $q->where('tahun', $tahunFilter);
-            })
-            ->orderBy('id', 'desc')
-            ->get();
+            });
+
+        if (class_exists(PerjalananDinasRepo::class)) {
+            PerjalananDinasRepo::applyTransportFilter($kdQuery);
+        }
+
+        $kegiatanList = $kdQuery->orderBy('id', 'desc')->get();
 
         return response()->json([
             'status'        => 'success',
@@ -98,14 +102,25 @@ class PerjalananDinasController extends Controller
             $assignedUserId = $req['user_id'];
         }
 
-        // Validasi: Alokasi pagu per rujukan kegiatan tidak boleh dobel melebihi pagu TOR
+        $kegiatanDetailId = !empty($req['kegiatan_detail_id']) 
+            ? $req['kegiatan_detail_id'] 
+            : ($activePagu ? $activePagu->kegiatan_detail_id : null);
+
+        $kdModel = null;
+        // Validasi: Alokasi pagu per rujukan kegiatan tidak boleh melebihi sisa pagu kegiatan
         if (!empty($kegiatanDetailId)) {
-            $existingCount = PerjalananDinasModel::where('kegiatan_detail_id', $kegiatanDetailId)->count();
-            if ($existingCount > 0) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Alokasi pagu perjalanan dinas untuk rujukan kegiatan ini sudah terpakai penuh (Sisa: Rp 0). Tidak dapat membuat usulan ganda.'
-                ], 422);
+            $kdModel = KegiatanDetailModel::find($kegiatanDetailId);
+            if ($kdModel && $kdModel->biaya > 0) {
+                $terpakai = (int) PerjalananDinasModel::where('kegiatan_detail_id', $kegiatanDetailId)
+                    ->where('status', '!=', 'ditolak')
+                    ->sum(DB::raw('COALESCE(nominal_disetujui, nominal_klaim, nominal_pagu, 0)'));
+                $sisa = max(0, (int) $kdModel->biaya - $terpakai);
+                if ($sisa <= 0) {
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Alokasi pagu perjalanan dinas untuk rujukan kegiatan ini sudah terpakai penuh (Sisa: Rp 0). Silakan pilih rujukan kegiatan dinas lain yang pagunya masih tersedia.'
+                    ], 422);
+                }
             }
         }
 
@@ -115,13 +130,9 @@ class PerjalananDinasController extends Controller
             ? $req['nomor_surat_tugas'] 
             : ('ST/' . date('Ymd') . '/' . str_pad($count, 3, '0', STR_PAD_LEFT));
 
-        $kegiatanDetailId = !empty($req['kegiatan_detail_id']) 
-            ? $req['kegiatan_detail_id'] 
-            : ($activePagu ? $activePagu->kegiatan_detail_id : null);
-
         $nominalPagu = !empty($req['nominal_pagu']) 
             ? (int)$req['nominal_pagu'] 
-            : ($activePagu ? (int)$activePagu->total_pagu : 25000000);
+            : ($kdModel ? (int)$kdModel->biaya : ($activePagu ? (int)$activePagu->total_pagu : 25000000));
 
         $kotaTujuan = $req['tujuan_kota'] ?? (isset($req['lokasi_tujuan']['kota']) ? $req['lokasi_tujuan']['kota'] : 'Daerah Khusus Ibukota Jakarta');
         $tempatTujuan = $req['tujuan_tempat'] ?? (isset($req['lokasi_tujuan']['tempat']) ? $req['lokasi_tujuan']['tempat'] : '');

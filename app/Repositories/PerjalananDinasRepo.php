@@ -106,6 +106,22 @@ class PerjalananDinasRepo
         }
     }
 
+    public static function applyTransportFilter($query, $kdTable = 'kegiatan_details', $kegiatanTable = 'kegiatans')
+    {
+        return $query->where(function($w) use ($kdTable, $kegiatanTable) {
+            $w->whereIn(DB::raw("LOWER(COALESCE({$kdTable}.kategori_kegiatan, ''))"), ['transportasi', 'perjalanan_dinas', 'perjalanan dinas'])
+              ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%transportasi%')
+              ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan dinas%')
+              ->orWhere(DB::raw("LOWER({$kegiatanTable}.nama_kegiatan)"), 'LIKE', '%perjalanan_dinas%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%tiket%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%tol%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%bbm%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%transport%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%perjalanan dinas%')
+              ->orWhere(DB::raw("LOWER({$kdTable}.nama_kegiatan_detail)"), 'LIKE', '%sppd%');
+        });
+    }
+
     public static function getPaguSummary($tahun = null, $loginUser = null, $params = [])
     {
         $tahun = $tahun ?: date('Y');
@@ -140,10 +156,10 @@ class PerjalananDinasRepo
             }
 
             // Aturan Pagu:
-            // 1. Akun PIC Civitas (non-admin) -> MURNI PER-PIC (hanya pagu kegiatan TOR RAB miliknya di tahun aktif)
+            // 1. Akun PIC Civitas (non-admin) -> MURNI PER-PIC (hanya pagu kegiatan dinas miliknya di tahun aktif)
             // 2. Admin di tab 'my' (Tugas Pribadi) -> PER-PIC untuk loginUser
             // 3. Admin memilih filter PIC tertentu -> PER-PIC untuk filterUserId
-            // 4. Admin melihat 'Semua Penugasan PIC' -> GLOBAL ADMIN (Tetap 740 Juta total pagu kampus)
+            // 4. Admin melihat 'Semua Penugasan PIC' -> GLOBAL ADMIN (Hanya pagu kegiatan Transportasi / Perjalanan Dinas)
             $targetUserId = null;
             if (!$isAdmin) {
                 $targetUserId = $loginUserId;
@@ -163,18 +179,19 @@ class PerjalananDinasRepo
             $picName = null;
 
             if ($targetUserId) {
-                // === MODE PER-PIC (REALTIME SINKRON TOR RAB KEGIATAN PER TAHUN ANGGARAN) ===
+                // === MODE PER-PIC (SINKRON HANYA KEGIATAN TRANSPORTASI / PERJALANAN DINAS PIC) ===
                 if (class_exists(\App\Models\User::class)) {
                     $picUser = \App\Models\User::find($targetUserId);
                     $picName = $picUser ? $picUser->name : null;
                 }
 
-                // 1. OPSI 2 (REALTIME TOR RAB): Ambil pagu kegiatan dari detail kegiatan TOR RAB di mana user bertindak sebagai PIC resmi pada tahun anggaran bersangkutan
-                $sumKdPagu = (int) \Illuminate\Support\Facades\DB::table('kegiatan_details')
+                // 1. Ambil pagu kegiatan transportasi/perjalanan dinas resmi di mana user bertindak sebagai PIC
+                $kdPicQuery = \Illuminate\Support\Facades\DB::table('kegiatan_details')
                     ->join('kegiatans', 'kegiatan_details.kegiatan_id', '=', 'kegiatans.id')
-                    ->where('kegiatan_details.pic_kegiatan', $targetUserId)
                     ->where('kegiatans.tahun', $tahun)
-                    ->sum('kegiatan_details.biaya');
+                    ->where('kegiatan_details.pic_kegiatan', $targetUserId);
+                self::applyTransportFilter($kdPicQuery);
+                $sumKdPagu = (int) $kdPicQuery->sum('kegiatan_details.biaya');
 
                 // Query seluruh surat tugas perjalanan dinas milik PIC di tahun bersangkutan
                 $pdQuery = \App\Models\PerjalananDinasModel::where('user_id', $targetUserId);
@@ -188,10 +205,10 @@ class PerjalananDinasRepo
                     });
                 }
 
-                // 2. Fallback untuk staf/pelaksana non-PIC kegiatan: Ambil dari akumulasi nominal surat tugas dinas
+                // 2. Fallback untuk staf/pelaksana non-PIC: Ambil dari akumulasi nominal surat tugas dinas miliknya
                 $sumPdPagu = (int) (clone $pdQuery)->sum('nominal_pagu');
 
-                // Prioritaskan pagu TOR RAB kegiatan PIC (misal Rp 26.800.000 untuk Pak Darmawan)
+                // Prioritaskan pagu kegiatan transport resmi milik PIC jika ada
                 $totalPagu = $sumKdPagu > 0 ? $sumKdPagu : $sumPdPagu;
 
                 // Total realisasi yang sudah dicairkan / lunas untuk PIC ini
@@ -208,12 +225,14 @@ class PerjalananDinasRepo
                     ->sum('nominal_klaim');
 
             } else {
-                // === MODE GLOBAL ADMIN (SEMUA PENUGASAN CIVITAS - TETAP PAGU TOTAL UNIVERSITAS 740 JUTA) ===
-                $totalPagu = (int) \Illuminate\Support\Facades\DB::table('kegiatan_details')
+                // === MODE GLOBAL ADMIN (HANYA MENGHITUNG PAGU PERJALANAN DINAS / TRANSPORTASI) ===
+                $kdGlobalQuery = \Illuminate\Support\Facades\DB::table('kegiatan_details')
                     ->join('kegiatans', 'kegiatan_details.kegiatan_id', '=', 'kegiatans.id')
-                    ->where('kegiatans.tahun', $tahun)
-                    ->sum('kegiatan_details.biaya');
+                    ->where('kegiatans.tahun', $tahun);
+                self::applyTransportFilter($kdGlobalQuery);
+                $sumKdTransportPagu = (int) $kdGlobalQuery->sum('kegiatan_details.biaya');
 
+                $dbPaguManual = 0;
                 if (class_exists(\App\Models\PaguPerjalananDinasModel::class)) {
                     $paguList = \App\Models\PaguPerjalananDinasModel::with(['kegiatan_detail.kegiatan', 'kegiatan_detail.tor'])
                         ->where('tahun_anggaran', $tahun)
@@ -222,7 +241,11 @@ class PerjalananDinasRepo
                         })
                         ->get();
                     $activePagu = $paguList->first();
+                    $dbPaguManual = (int) ($activePagu->total_pagu ?? 0);
                 }
+
+                // Pagu Perjalanan Dinas resmi: prioritaskan sum pagu kegiatan transportasi / dinas (contoh: Rp 29.000.000)
+                $totalPagu = $sumKdTransportPagu > 0 ? $sumKdTransportPagu : $dbPaguManual;
 
                 if (class_exists(\App\Models\PerjalananDinasModel::class)) {
                     $totalDibayarkan = (int) \App\Models\PerjalananDinasModel::where('status', 'dibayarkan')

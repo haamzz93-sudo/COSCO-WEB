@@ -1198,12 +1198,24 @@ class DashboardController extends Controller
         $kegiatanList = [];
         try {
             if (class_exists(\App\Models\KegiatanDetailModel::class)) {
-                $kegiatanList = \App\Models\KegiatanDetailModel::with(['kegiatan', 'user_pic_kegiatan'])
+                $kdQuery = \App\Models\KegiatanDetailModel::with(['kegiatan', 'user_pic_kegiatan', 'tor'])
                     ->whereHas('kegiatan', function($q) use ($tahun) {
                         $q->where('tahun', $tahun);
-                    })
-                    ->orderBy('id', 'desc')
-                    ->get();
+                    });
+
+                if (class_exists(\App\Repositories\PerjalananDinasRepo::class)) {
+                    \App\Repositories\PerjalananDinasRepo::applyTransportFilter($kdQuery);
+                }
+
+                $kegiatanList = $kdQuery->orderBy('id', 'desc')->get();
+
+                // Pastikan jika ada rujukan tor_id spesifik (misal dari tombol Tugas Dinas), tetap disertakan
+                if (!empty($torId) && !$kegiatanList->contains('id', $torId)) {
+                    $specificItem = \App\Models\KegiatanDetailModel::with(['kegiatan', 'user_pic_kegiatan', 'tor'])->find($torId);
+                    if ($specificItem) {
+                        $kegiatanList->prepend($specificItem);
+                    }
+                }
             }
         } catch (\Throwable $e) {}
 

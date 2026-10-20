@@ -173,7 +173,7 @@ export default function DetailKegiatanPage() {
                                             </div>
                                         </div>
                                         <Link
-                                            href="/dashboard/perjalanan_dinas"
+                                            href={`/dashboard/perjalanan_dinas?action=create&tor_id=${detail?.id || detail?.kegiatan_detail_id || ''}`}
                                             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer"
                                         >
                                             <span>Buka Klaim Perjalanan Dinas</span>
