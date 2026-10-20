@@ -88,18 +88,20 @@ class PerjalananDinasRepo
                 $query->where('status', $status);
             }
 
-            // 1. Filter ketat berdasarkan Tahun Anggaran dari kegiatan induk resmi
+            // 1. Filter fleksibel berdasarkan Tahun Anggaran (kegiatan resmi ATAU tanggal surat tugas)
             if (!empty($params['tahun'])) {
                 $thn = (string) $params['tahun'];
-                $query->whereHas('kegiatan_detail.kegiatan', function($k) use ($thn) {
-                    $k->where('tahun', $thn);
+                $query->where(function($w) use ($thn) {
+                    $w->whereHas('kegiatan_detail.kegiatan', function($k) use ($thn) {
+                        $k->where('tahun', $thn);
+                    })
+                    ->orWhereYear('tgl_berangkat', $thn)
+                    ->orWhereYear('created_at', $thn);
                 });
             }
 
-            // 2. Eliminasi data dummy: HANYA tampilkan penugasan yang memiliki rujukan Kegiatan resmi di database
-            $query->whereHas('kegiatan_detail');
-
-            return $query->orderBy('id', 'desc')->paginate($perPage);
+            // Urutkan: Data terbaru di atas, data lama di bawah
+            return $query->orderBy('created_at', 'desc')->orderBy('id', 'desc')->paginate($perPage);
         } catch (\Throwable $e) {
             \Log::warning('PerjalananDinasRepo gets error: ' . $e->getMessage());
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
