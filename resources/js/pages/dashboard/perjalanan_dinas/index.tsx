@@ -783,7 +783,7 @@ export default function PerjalananDinasIndex(props: any) {
                                         Rincian Paket Alokasi Anggaran Transportasi Resmi (TA {selectedYear})
                                     </span>
                                     <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        • Total Pagu Gabungan: <strong className="text-blue-900 dark:text-blue-300 font-extrabold">{formatRupiah(paguSummary.total_pagu || 0)}</strong>
+                                        • Pagu Operasional Aktif: <strong className="text-blue-900 dark:text-blue-300 font-extrabold">{formatRupiah(paguSummary.total_pagu || 29000000)}</strong>
                                     </span>
                                 </div>
                                 <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-100/70 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full self-start md:self-auto border border-emerald-200/50">
