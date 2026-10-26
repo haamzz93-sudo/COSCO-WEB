@@ -698,9 +698,10 @@ export default function TablePerjalananDinasPersetujuan({
                                     </Label>
                                     <NumericFormat
                                         customInput={Input}
-                                        thousandSeparator=","
+                                        thousandSeparator="."
                                         decimalSeparator=","
                                         prefix="Rp "
+                                        allowNegative={false}
                                         value={modalValidasi.nominal_disetujui}
                                         onValueChange={(vals) => setModalValidasi(prev => ({ ...prev, nominal_disetujui: vals.floatValue || 0 }))}
                                         className="text-sm font-black text-emerald-800 rounded-xl"

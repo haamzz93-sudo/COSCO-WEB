@@ -1321,9 +1321,10 @@ export default function PerjalananDinasIndex(props: any) {
                                             </span>
                                         </label>
                                         <NumericFormat
-                                            thousandSeparator=","
+                                            thousandSeparator="."
                                             decimalSeparator=","
                                             prefix="Rp "
+                                            allowNegative={false}
                                             value={newForm.nominal_pagu || ''}
                                             onValueChange={(values) => {
                                                 setNewForm({
