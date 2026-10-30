@@ -168,12 +168,15 @@ class TorController extends Controller
         $kategori_kegiatan = $tor['kegiatan_detail']['kategori_kegiatan'] ?? 'kegiatan';
 
         if (isset($req['rab']) && is_array($req['rab']) && count($req['rab']) > 0 && !in_array($kategori_kegiatan, ['bhp', 'inventaris'])) {
-            // SINKRONISASI OTOMATIS: Jika ada master kelompok belanja, sinkronkan pajak dengan master terbaru
+            // SINKRONISASI OTOMATIS: Jika ada master kelompok belanja, sinkronkan pajak & nama dengan master terbaru
             foreach ($req['rab'] as $idx => $item) {
                 if (!empty($item['kelompok_belanja_id'])) {
                     $kb = KelompokBelanjaModel::find($item['kelompok_belanja_id']);
                     if ($kb && isset($kb->kwitansi_pajak)) {
                         $req['rab'][$idx]['pajak'] = (float)$kb->kwitansi_pajak;
+                    }
+                    if ($kb && !empty($kb->nama_kelompok_belanja)) {
+                        $req['rab'][$idx]['nama_kelompok_belanja'] = $kb->nama_kelompok_belanja;
                     }
                 }
             }

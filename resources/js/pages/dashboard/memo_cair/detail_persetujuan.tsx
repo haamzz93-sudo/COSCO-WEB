@@ -109,7 +109,7 @@ export default function Page() {
     useEffect(() => {
         getTor()
         getMemoCair()
-        mt_get_kelompok_belanja.mutate({}, {
+        mt_get_kelompok_belanja.mutate({ per_page: 500 }, {
             onSuccess: (data: any) => {
                 setKelompokBelanja(data.data || [])
             }
@@ -227,7 +227,8 @@ export default function Page() {
 
     const getMakLabel = (item: any) => {
         if (!item) return ""
-        const kb = kelompok_belanjas.find((k: any) => k.id == item.kelompok_belanja_id || k.nama_kelompok_belanja === item.nama_kelompok_belanja)
+        const kb = (item.kelompok_belanja_id ? kelompok_belanjas.find((k: any) => String(k.id) === String(item.kelompok_belanja_id)) : null)
+            || kelompok_belanjas.find((k: any) => k.nama_kelompok_belanja === item.nama_kelompok_belanja)
         if (kb?.mak) {
             return `${kb.mak.kode_mak ? `[MAK: ${kb.mak.kode_mak}] ` : ""}${kb.mak.nama_belanja || ""}`
         }
@@ -240,9 +241,11 @@ export default function Page() {
     const options_kelompok_belanja = kelompok_belanjas.map((kb: any) => {
         const makStr = kb.mak ? `[MAK: ${kb.mak.kode_mak ? `${kb.mak.kode_mak} - ` : ""}${kb.mak.nama_belanja || ""}] ` : ""
         return {
-            value: kb.nama_kelompok_belanja,
+            value: String(kb.id),
             label: `${makStr}${kb.nama_kelompok_belanja}`,
             id: kb.id,
+            data: kb,
+            nama_kelompok_belanja: kb.nama_kelompok_belanja,
             pajak: kb.kwitansi_pajak
         }
     })
@@ -941,7 +944,7 @@ export default function Page() {
                                                     const defaultSatuan = satuans.find((s: any) => s.nama_satuan === "Orang/Jam")?.nama_satuan || satuans[0]?.nama_satuan || "Orang/Jam"
                                                     const newItem = {
                                                         id: null,
-                                                        kelompok_belanja_id: firstKelompok.id || "",
+                                                        kelompok_belanja_id: firstKelompok.id ? String(firstKelompok.id) : "",
                                                         nama_kelompok_belanja: firstKelompok.nama_kelompok_belanja || "Lampiran SPJ Honorarium Pembicara/Narasumber",
                                                         keterangan: "Honorarium Narasumber / Pemateri",
                                                         frekuensi: "1",
@@ -1004,11 +1007,15 @@ export default function Page() {
                                                                         <div className="space-y-1.5 py-0.5">
                                                                             <Select
                                                                                 options={options_kelompok_belanja}
-                                                                                value={options_kelompok_belanja.find(kb => kb.value === item.nama_kelompok_belanja || kb.id == item.kelompok_belanja_id) || null}
+                                                                                value={
+                                                                                    options_kelompok_belanja.find(kb => String(kb.value) === String(item.kelompok_belanja_id)) ||
+                                                                                    (item.nama_kelompok_belanja ? options_kelompok_belanja.find(kb => kb.data?.nama_kelompok_belanja === item.nama_kelompok_belanja) : null) ||
+                                                                                    null
+                                                                                }
                                                                                 onChange={(e: any) => {
-                                                                                    formik.setFieldValue(`rab.${idx}.nama_kelompok_belanja`, e.value)
-                                                                                    formik.setFieldValue(`rab.${idx}.kelompok_belanja_id`, e.id || "")
-                                                                                    if (e.pajak) {
+                                                                                    formik.setFieldValue(`rab.${idx}.kelompok_belanja_id`, e ? String(e.value) : "")
+                                                                                    formik.setFieldValue(`rab.${idx}.nama_kelompok_belanja`, e ? (e.data?.nama_kelompok_belanja || e.label) : "")
+                                                                                    if (e?.pajak !== undefined) {
                                                                                         formik.setFieldValue(`rab.${idx}.pajak`, e.pajak)
                                                                                     }
                                                                                 }}

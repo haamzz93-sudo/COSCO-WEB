@@ -16,7 +16,7 @@ class KelompokBelanjaRepo{
     public static function gets($params)
     {
         //params
-        $params['per_page']=isset($params['per_page'])?trim($params['per_page']):"";
+        $per_page = (!empty($params['per_page']) && is_numeric($params['per_page'])) ? (int)$params['per_page'] : 500;
         $params['q']=isset($params['q'])?$params['q']:"";
         $params['mak_id']=isset($params['mak_id'])?$params['mak_id']:"";
 
@@ -44,6 +44,6 @@ class KelompokBelanjaRepo{
         $query=$query->orderByDesc("id");
 
         //return
-        return $query->paginate($params['per_page'])->toArray();
+        return $query->paginate($per_page)->toArray();
     }
 }

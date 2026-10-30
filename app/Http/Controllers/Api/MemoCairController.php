@@ -98,14 +98,19 @@ class MemoCairController extends Controller
                 $total_input_plus_pajak += ($subtotal + $nom_pajak);
 
                 $kelompok_id = $item['kelompok_belanja_id'] ?? null;
-                if (!$kelompok_id) {
+                $kb = null;
+                if ($kelompok_id) {
+                    $kb = KelompokBelanjaModel::find($kelompok_id);
+                }
+                if (!$kelompok_id || !$kb) {
                     $defaultKelompok = KelompokBelanjaModel::first();
                     $kelompok_id = $defaultKelompok ? $defaultKelompok->id : 1;
+                    $kb = $defaultKelompok;
                 }
 
                 $active_rab[] = [
                     'kelompok_belanja_id'   => (string) $kelompok_id,
-                    'nama_kelompok_belanja' => $item['nama_kelompok_belanja'] ?? 'Belanja Bahan/Operasional',
+                    'nama_kelompok_belanja' => $kb ? $kb->nama_kelompok_belanja : ($item['nama_kelompok_belanja'] ?? 'Belanja Bahan/Operasional'),
                     'kode_item'             => $item['kode_item'] ?? ('ITEM-' . ($idx + 1) . '-' . time()),
                     'keterangan'            => $item['keterangan'] ?? 'Item Belanja',
                     'frekuensi'             => $freq,

@@ -152,9 +152,9 @@ export default function Page() {
                 setSatuan(data.data)
             }
         })
-        mt_get_kelompok_belanja.mutate({}, {
+        mt_get_kelompok_belanja.mutate({ per_page: 500 }, {
             onSuccess:data=>{
-                setKelompokBelanja(data.data)
+                setKelompokBelanja(data.data || [])
             }
         })
     }, [])
@@ -290,12 +290,13 @@ export default function Page() {
             const makStr = list.mak ? `[MAK: ${list.mak.kode_mak ? `${list.mak.kode_mak} - ` : ""}${list.mak.nama_belanja || ""}] ` : ""
             return {
                 label: `${makStr}${list.nama_kelompok_belanja}`,
-                value: list.id,
+                value: String(list.id),
+                id: list.id,
                 data: list
             }
         })
 
-        return [{label:"Pilih Detail Belanja (MAK)...", value:"", data:null}].concat(data)
+        return [{label:"Pilih Detail Belanja (MAK)...", value:"", id:"", data:null}].concat(data)
     }
 
 
@@ -885,7 +886,7 @@ function Rab(props: any) {
     }
     const saveDraft=(formik, actionSuccess=null)=>{
         const sanitizedRab = (formik.values.rab || []).map((item: any) => {
-            const kbOption = props.options_kelompok_belanja?.find((f: any) => String(f.value) === String(item.kelompok_belanja_id));
+            const kbOption = props.options_kelompok_belanja?.find((f: any) => f.value !== "" && String(f.value) === String(item.kelompok_belanja_id));
             const currentTax = kbOption && kbOption.data?.kwitansi_pajak !== undefined
                 ? (parseFloat(kbOption.data.kwitansi_pajak) || 0)
                 : (item.pajak !== undefined && item.pajak !== "" ? parseFloat(item.pajak) : 0);
@@ -893,6 +894,7 @@ function Rab(props: any) {
             return {
                 ...item,
                 kelompok_belanja_id: (item.kelompok_belanja_id !== undefined && item.kelompok_belanja_id !== null) ? String(item.kelompok_belanja_id) : "",
+                nama_kelompok_belanja: kbOption?.data?.nama_kelompok_belanja || item.nama_kelompok_belanja || "",
                 pajak: currentTax
             };
         });
@@ -1788,9 +1790,15 @@ const RowItem=(props)=>{
                 <td className="px-3 py-3.5 text-center font-bold text-slate-500 border-r border-slate-200 dark:border-slate-700">{index + 1}</td>
                 <td className="px-4 py-3.5 border-r border-slate-200 dark:border-slate-700">
                     <div className="space-y-1">
-                        <span className="text-xs font-extrabold text-blue-900 dark:text-blue-300 block">
-                            {data.nama_kelompok_belanja || "-"}
-                        </span>
+                        {(() => {
+                            const kb = props.options_kelompok_belanja?.find((f: any) => f.value !== "" && String(f.value) === String(data.kelompok_belanja_id));
+                            const labelToDisplay = kb ? kb.label : data.nama_kelompok_belanja;
+                            return (
+                                <span className="text-xs font-extrabold text-blue-900 dark:text-blue-300 block">
+                                    {labelToDisplay || "-"}
+                                </span>
+                            );
+                        })()}
                         <span className="text-xs text-slate-700 dark:text-slate-300 font-medium block leading-snug">
                             {data.keterangan || "-"}
                         </span>
@@ -1833,12 +1841,16 @@ const RowItem=(props)=>{
                 <div className="flex flex-col gap-1.5 min-w-[280px]">
                     <Select
                         options={props.options_kelompok_belanja}
-                        value={props.options_kelompok_belanja.find(f => f.value == data.kelompok_belanja_id)}
+                        value={
+                            props.options_kelompok_belanja.find(f => f.value !== "" && String(f.value) === String(data.kelompok_belanja_id)) ||
+                            (data.nama_kelompok_belanja ? props.options_kelompok_belanja.find(f => f.value !== "" && f.data?.nama_kelompok_belanja === data.nama_kelompok_belanja) : null) ||
+                            null
+                        }
                         onChange={e => {
                             const new_item = Object.assign({}, data, {
-                                kelompok_belanja_id: e.value,
-                                nama_kelompok_belanja: e.data?.nama_kelompok_belanja || e.label,
-                                pajak: !_.isNull(e.data) ? (parseFloat(e.data.kwitansi_pajak) || 0) : 0
+                                kelompok_belanja_id: e ? String(e.value) : "",
+                                nama_kelompok_belanja: e?.data?.nama_kelompok_belanja || (e ? e.label : ""),
+                                pajak: e && !_.isNull(e.data) ? (parseFloat(e.data.kwitansi_pajak) || 0) : 0
                             })
                             formik.setFieldValue(`rab.${index}`, new_item)
                         }}
