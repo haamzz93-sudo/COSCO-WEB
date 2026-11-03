@@ -45,6 +45,7 @@ import withReactContent from 'sweetalert2-react-content'
 const MySwal = withReactContent(swal)
 
 const options_status = [
+    { label: "Semua Status Ajuan", value: "sent,keuangan_applied,keuangan_rejected,terbayar" },
     { label: "Menunggu Validasi Pencairan", value: "sent" },
     { label: "Disetujui (Siap Dicairkan)", value: "keuangan_applied" },
     { label: "Ditolak / Perlu Perbaikan", value: "keuangan_rejected" },
@@ -451,7 +452,8 @@ const TableContent = (props: any) => {
     const isValidasiSpjMode = props.is_validasi_spj || false;
     const auth: any = usePage().props.auth
     const queryClient = useQueryClient()
-    const isAdmin = auth?.user?.is_superadmin || auth?.user?.role?.is_admin
+    const isAdmin = Boolean(auth?.user?.is_superadmin || auth?.user?.is_admin || auth?.user?.role === 'admin' || auth?.user?.role === 'superadmin')
+    const isValidator = Boolean(isAdmin || auth?.user?.role === 'sub_kor' || auth?.user?.role === 'keuangan' || auth?.user?.permissions?.includes('memo_cair_keuangan_validasi'))
 
     const [modalValidasi, setModalValidasi] = useState<{ open: boolean, data: any }>({
         open: false,
@@ -559,7 +561,7 @@ const TableContent = (props: any) => {
     }
 
     const canValidate = (item: any) => {
-        return item.status_ajuan === "sent" && (auth?.user?.permissions?.includes("memo_cair_keuangan_validasi") || isAdmin)
+        return item.status_ajuan === "sent" && isValidator
     }
 
     const bayarPencairan = (id: any) => {
@@ -645,8 +647,8 @@ const TableContent = (props: any) => {
             {/* TOOLBAR */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
-                    {/* HANYA SUPER ADMIN YANG TAMPIL DROPDOWN STATUS AJUAN (JIKA BUKAN VALIDASI SPJ) */}
-                    {isAdmin && !isValidasiSpjMode && (
+                    {/* DROPDOWN STATUS AJUAN (TAMPIL UNTUK ADMIN DAN VALIDATOR SUB KOR / KEUANGAN JIKA BUKAN VALIDASI SPJ) */}
+                    {isValidator && !isValidasiSpjMode && (
                         <div className="w-full sm:w-56">
                             <Select
                                 options={isBendaharaMode ? [

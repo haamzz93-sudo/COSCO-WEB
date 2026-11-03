@@ -28,7 +28,7 @@ class MemoCairRepo{
         $params['status_spj'] = isset($params['status_spj']) ? $params['status_spj'] : "";
         $params['program_studi_id'] = isset($params['program_studi_id']) ? $params['program_studi_id'] : "";
         $params['tahun'] = isset($params['tahun']) ? $params['tahun'] : "";
-        $isValidasiSpj = !empty($params['is_validasi_spj']) || ($params['tab'] ?? '') === 'validasi_spj';
+        $isValidasiSpj = filter_var($params['is_validasi_spj'] ?? false, FILTER_VALIDATE_BOOLEAN) || ($params['tab'] ?? '') === 'validasi_spj';
 
         $query = MemoCairModel::with([
             "tor",

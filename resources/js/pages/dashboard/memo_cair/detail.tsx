@@ -312,7 +312,15 @@ export default function Page() {
         return (noPending || memo_cair.some(f => f.status_ajuan === "keuangan_rejected" || f.status_ajuan?.includes("revisi"))) && hasRab && isPic
     }
 
-    const isKeuanganValidator = false
+    const isKeuanganValidator = Boolean(
+        auth?.user?.permissions?.includes("memo_cair_keuangan_validasi") ||
+        auth?.user?.role === "sub_kor" ||
+        auth?.user?.role === "keuangan" ||
+        auth?.user?.role === "admin" ||
+        auth?.user?.role === "superadmin" ||
+        auth?.user?.is_admin ||
+        auth?.user?.permissions?.includes("admin")
+    )
 
     return (
         <SidebarProvider defaultOpen={true}>
