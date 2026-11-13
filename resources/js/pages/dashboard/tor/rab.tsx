@@ -916,8 +916,8 @@ function Rab(props: any) {
         })
     }
     const disabled=(type="tor_pic_update")=>{
-        const isUnderReview = ["sent", "koordinator_applied", "wakil_dekan_applied", "keuangan_applied"].includes(props.tor?.status_ajuan)
-        const isRevisiOrDraft = !props.tor?.status_ajuan || ["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "wakil_dekan_rejected"].includes(props.tor?.status_ajuan)
+        const isUnderReview = ["sent", "koordinator_applied", "pp_applied", "wakil_dekan_applied", "keuangan_applied"].includes(props.tor?.status_ajuan)
+        const isRevisiOrDraft = !props.tor?.status_ajuan || ["draft", "koordinator_revisi", "keuangan_revisi", "pp_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "pp_rejected", "wakil_dekan_rejected"].includes(props.tor?.status_ajuan)
 
         const isAdmin = auth.user?.role === "admin" || auth.user?.role === "superadmin" || auth.user?.is_admin || auth.user?.permissions?.includes("tor_superadmin")
         const picId = props.tor?.kegiatan_detail?.pic_kegiatan || props.tor?.pic_kegiatan || props.tor?.user_pic_kegiatan?.id
@@ -1374,7 +1374,7 @@ function Rab(props: any) {
                                         </Button>
                                     )}
 
-                                    {(["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "wakil_dekan_rejected"].includes(props.tor?.status_ajuan || "draft") && !disabled("tor_pic_ajukan")) && (
+                                    {(["draft", "koordinator_revisi", "keuangan_revisi", "pp_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "pp_rejected", "wakil_dekan_rejected"].includes(props.tor?.status_ajuan || "draft") && !disabled("tor_pic_ajukan")) && (
                                         <Button 
                                             type="button" 
                                             className="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs h-10 px-5 rounded-xl shadow-xs inline-flex items-center gap-2 transition-all hover:shadow-md cursor-pointer"
@@ -1509,10 +1509,22 @@ function Rab(props: any) {
                                                             if (props.tor?.status_ajuan === "keuangan_revisi") {
                                                                 nextStatus = "koordinator_applied"
                                                             } else if (props.tor?.status_ajuan === "pp_revisi") {
-                                                                nextStatus = "sent"
+                                                                nextStatus = isHps ? "koordinator_applied" : "sent"
                                                             } else if (props.tor?.status_ajuan === "wakil_dekan_revisi") {
                                                                 nextStatus = isHps ? "pp_applied" : "keuangan_applied"
                                                             }
+
+                                                            const targetReviewer = nextStatus === "pp_applied" 
+                                                                ? "Wakil Dekan II" 
+                                                                : nextStatus === "koordinator_applied" 
+                                                                ? (isHps ? "Pejabat Pengadaan" : "Wakil Dekan II") 
+                                                                : "Koordinator";
+
+                                                            const statusDesc = nextStatus === "pp_applied"
+                                                                ? "Menunggu Persetujuan Wakil Dekan II"
+                                                                : nextStatus === "koordinator_applied"
+                                                                ? (isHps ? "Menunggu Telaah Pejabat Pengadaan" : "Menunggu Persetujuan Wakil Dekan II")
+                                                                : "Menunggu Persetujuan Koordinator";
 
                                                             edit_data.mutate(
                                                                 { id: props.tor.id, status_ajuan: nextStatus } as any,
@@ -1523,10 +1535,10 @@ function Rab(props: any) {
                                                                             html: `
                                                                                 <div class="text-center text-xs space-y-2 mt-2">
                                                                                     <p class="text-slate-600 dark:text-slate-300">
-                                                                                        Usulan <b>${docLabel}</b> berhasil dikirimkan ke <b>Koordinator</b> untuk ditinjau.
+                                                                                        Usulan <b>${docLabel}</b> berhasil dikirimkan ke <b>${targetReviewer}</b> untuk ditinjau.
                                                                                     </p>
                                                                                     <p class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
-                                                                                        Status saat ini: Menunggu Persetujuan Koordinator
+                                                                                        Status saat ini: ${statusDesc}
                                                                                     </p>
                                                                                 </div>
                                                                             `,

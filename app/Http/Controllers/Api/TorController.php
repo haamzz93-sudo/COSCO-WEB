@@ -137,7 +137,7 @@ class TorController extends Controller
         }
 
         //VALIDATION APPLIED (Admins can always update)
-        if(!$isAdmin && !in_array($id_data['status_ajuan'], ["draft", "koordinator_revisi", "keuangan_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "wakil_dekan_rejected"])){
+        if(!$isAdmin && !in_array($id_data['status_ajuan'], ["draft", "koordinator_revisi", "keuangan_revisi", "pp_revisi", "wakil_dekan_revisi", "koordinator_rejected", "keuangan_rejected", "pp_rejected", "wakil_dekan_rejected"])){
             return response()->json([
                 'error' =>"VALIDATION_ERROR",
                 'data'  =>"Dokumen sedang dalam tahap verifikasi/persetujuan."
@@ -342,10 +342,20 @@ class TorController extends Controller
         }
 
         //VALIDATION APPLIED
-        if(!in_array($id_data['status_ajuan'], ["draft", "koordinator_revisi", "wakil_dekan_revisi", "keuangan_revisi"])){
+        if(!in_array($id_data['status_ajuan'], [
+            "draft", 
+            "koordinator_revisi", 
+            "pp_revisi", 
+            "wakil_dekan_revisi", 
+            "keuangan_revisi", 
+            "koordinator_rejected", 
+            "pp_rejected", 
+            "wakil_dekan_rejected", 
+            "keuangan_rejected"
+        ])){
             return response()->json([
                 'error' =>"VALIDATION_ERROR",
-                'data'  =>"Bad request."
+                'data'  =>"Dokumen saat ini sedang dalam proses review dan tidak dapat diajukan ulang."
             ], 400);
         }
 
@@ -577,7 +587,7 @@ class TorController extends Controller
 
         //VALIDATION
         $validation=Validator::make($req, [
-            'status_ajuan'      =>"nullable|in:sent,koordinator_applied,keuangan_applied"
+            'status_ajuan'      =>"nullable|in:sent,koordinator_applied,keuangan_applied,pp_applied,wakil_dekan_applied"
         ]);
         if($validation->fails()){
             return response()->json([
@@ -592,6 +602,7 @@ class TorController extends Controller
                 'catatan_koordinator'=>"",
                 'catatan_wakil_dekan'=>"",
                 'catatan_keuangan'  =>"",
+                'catatan_pp'        =>"",
                 'wakil_dekan_id'    =>null
             ];
             
